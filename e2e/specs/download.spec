@@ -1,0 +1,17 @@
+# File download
+
+* Navigate to "/download.html"
+
+## Text
+* Click "text" link
+* File "text.txt" has downloaded
+* Content of downloaded "text.txt" equals to "__files/text.txt"
+
+## Binary
+* Click "image" link
+* File "image.tiff" has downloaded
+* Content of downloaded "image.tiff" equals to "__files/image.tiff"
+
+## Multibyte name
+* Click "multibyte" link
+* File "マルチバイト文字.txt" has downloaded

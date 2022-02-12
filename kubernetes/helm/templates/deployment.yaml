@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: selenium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: selenium
+  template:
+    metadata:
+      labels:
+        app: selenium
+    spec:
+      serviceAccountName: {{ include "selenium-dynamic-grid.serviceAccountName" . }}
+      containers:
+        - name: hub
+          image: "{{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag }}"
+          imagePullPolicy: {{ .Values.node.image.pullPolicy }}
+          ports:
+            - containerPort: 4442
+              protocol: TCP
+            - containerPort: 4443
+              protocol: TCP
+            - containerPort: 4444
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /readyz
+              port: 4444
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 4444
+          resources:
+            {{- toYaml .Values.hub.resources | nindent 12 }}
+        - name: node
+          image: "{{ .Values.node.image.repository }}:{{ .Values.node.image.tag }}"
+          imagePullPolicy: {{ .Values.node.image.pullPolicy }}
+          ports:
+            - containerPort: 5555
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /readyz
+              port: 5555
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 5555
+          resources:
+            {{- toYaml .Values.node.resources | nindent 12 }}
+          env:
+            - name: SE_EVENT_BUS_HOST
+              value: "localhost"
+            - name: SE_EVENT_BUS_PUBLISH_PORT
+              value: "4442"
+            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+              value: "4443"
+          volumeMounts:
+            - name: node-config
+              mountPath: /opt/bin/config.toml
+              subPath: config.toml
+            - name: videos
+              mountPath: /videos
+        - name: proxy
+          image: "nginx:alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: proxy-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+            - name: videos
+              mountPath: /videos
+      volumes:
+        - name: node-config
+          configMap:
+            name: node
+        - name: proxy-config
+          configMap:
+            name: proxy
+        - name: videos
+          emptyDir: {}

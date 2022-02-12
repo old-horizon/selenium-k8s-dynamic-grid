@@ -1,0 +1,27 @@
+hub:
+  image:
+    repository: oldhorizon/selenium/dynamic-grid-hub
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  service:
+    type: NodePort
+    sourceRanges: []
+  resources: {}
+
+node:
+  image:
+    repository: oldhorizon/selenium/dynamic-grid-node
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  resources: {}
+
+worker:
+  resources:
+    requests: {}
+    limits: {}
+
+serviceAccount:
+  name: ""
+
+config:
+  maxSessions: 2

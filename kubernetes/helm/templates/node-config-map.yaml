@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node
+data:
+  config.toml: |
+    [node]
+    implementation = "com.github.old_horizon.selenium.grid.node.KubernetesNode"
+
+    [kubernetes]
+    configs = [
+        "selenium/standalone-firefox:{{ .Chart.AppVersion }}", '{"browserName": "firefox"}',
+        "selenium/standalone-chrome:{{ .Chart.AppVersion }}", '{"browserName": "chrome"}',
+        "selenium/standalone-edge:{{ .Chart.AppVersion }}", '{"browserName": "MicrosoftEdge"}'
+    ]
+    max-sessions = {{ .Values.config.maxSessions }}
+    videos-path = "/videos"
+    {{- if .Values.worker.resources.requests.cpu }}
+    worker-cpu-request = "{{ .Values.worker.resources.requests.cpu }}"
+    {{- end }}
+    {{- if .Values.worker.resources.requests.memory }}
+    worker-memory-request = "{{ .Values.worker.resources.requests.memory }}"
+    {{- end }}
+    {{- if .Values.worker.resources.limits.cpu }}
+    worker-cpu-limit = "{{ .Values.worker.resources.limits.cpu }}"
+    {{- end }}
+    {{- if .Values.worker.resources.limits.memory }}
+    worker-memory-limit = "{{ .Values.worker.resources.limits.memory }}"
+    {{- end }}

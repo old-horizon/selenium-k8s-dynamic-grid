@@ -1,0 +1,56 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "url": "/download.html"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "bodyFileName": "download.html"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "/text.txt"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Disposition": "attachment; filename=\"text.txt\""
+        },
+        "bodyFileName": "text.txt"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "/image.tiff"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Disposition": "attachment; filename=\"image.tiff\""
+        },
+        "bodyFileName": "image.tiff"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "/multibyte.txt"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Disposition": "attachment; filename*=utf-8''%E3%83%9E%E3%83%AB%E3%83%81%E3%83%90%E3%82%A4%E3%83%88%E6%96%87%E5%AD%97.txt"
+        },
+        "bodyFileName": "text.txt"
+      }
+    }
+  ]
+}
