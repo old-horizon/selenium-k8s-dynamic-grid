@@ -1,9 +1,6 @@
 package com.github.old_horizon.selenium.grid.node;
 
-import com.github.old_horizon.selenium.k8s.DockerImage;
-import com.github.old_horizon.selenium.k8s.KubernetesDriver;
-import com.github.old_horizon.selenium.k8s.PodName;
-import com.github.old_horizon.selenium.k8s.ResourceRequests;
+import com.github.old_horizon.selenium.k8s.*;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
@@ -75,13 +72,15 @@ public class KubernetesSessionFactory implements SessionFactory {
                 LOG.info("Creating worker pod...");
                 WorkerPodSpec podSpec = getWorkerPodSpec(desiredCapabilities);
                 var podName = k8s.createPod(podSpec);
+                var podIp = k8s.getPodIp(podName);
+                var workerPort = podSpec.getWorkerPort();
 
                 LOG.info(String.format("Waiting for server to start (pod: %s)", podName));
 
                 HttpClient client;
                 URL remoteAddress;
                 try {
-                    remoteAddress = getRemoteAddress(podName, podSpec.getWorkerPort());
+                    remoteAddress = getRemoteAddress(podIp, workerPort);
                     client = clientFactory.createClient(remoteAddress);
                     waitForServerToStart(client, Duration.ofMinutes(1));
                 } catch (Exception e) {
@@ -106,6 +105,7 @@ public class KubernetesSessionFactory implements SessionFactory {
                 var id = new SessionId(response.getSessionId());
                 var capabilities = new ImmutableCapabilities((Map<?, ?>) response.getValue());
                 var mergedCapabilities = capabilities.merge(desiredCapabilities);
+                mergedCapabilities = addForwardCdpEndpoint(mergedCapabilities, podIp, workerPort, id.toString());
                 var dialect = result.getDialect();
                 var downstream = sessionRequest.getDownstreamDialects().contains(dialect) ? dialect : W3C;
                 attributeMap.put(DOWNSTREAM_DIALECT.getKey(), EventAttribute.setValue(downstream.toString()));
@@ -176,9 +176,9 @@ public class KubernetesSessionFactory implements SessionFactory {
         return k8s.getOwnerReference(myName);
     }
 
-    URL getRemoteAddress(PodName name, int port) {
+    URL getRemoteAddress(Ip ip, int port) {
         try {
-            return new URL(String.format("http://%s:%d/wd/hub", k8s.getPodIp(name), port));
+            return new URL(String.format("http://%s:%d/wd/hub", ip, port));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }
@@ -196,5 +196,10 @@ public class KubernetesSessionFactory implements SessionFactory {
             LOG.fine(string(response));
             return response.getStatus();
         });
+    }
+
+    Capabilities addForwardCdpEndpoint(Capabilities sessionCapabilities, Ip ip, int port, String sessionId) {
+        var forwardCdpPath = String.format("ws://%s:%s/session/%s/se/fwd", ip, port, sessionId);
+        return new PersistentCapabilities(sessionCapabilities).setCapability("se:forwardCdp", forwardCdpPath);
     }
 }

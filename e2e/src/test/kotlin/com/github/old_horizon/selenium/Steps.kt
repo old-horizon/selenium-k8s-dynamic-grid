@@ -4,6 +4,7 @@ import com.codeborne.selenide.Condition.exactText
 import com.codeborne.selenide.Configuration
 import com.codeborne.selenide.Selenide
 import com.codeborne.selenide.Selenide.`$$`
+import com.codeborne.selenide.Selenide.`$`
 import com.codeborne.selenide.WebDriverRunner
 import com.google.common.html.HtmlEscapers
 import com.thoughtworks.gauge.*
@@ -12,7 +13,14 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient
 import io.github.rybalkinsd.kohttp.dsl.httpHead
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo
+import org.openqa.selenium.devtools.NetworkInterceptor
 import org.openqa.selenium.logging.LogType
+import org.openqa.selenium.remote.RemoteWebDriver
+import org.openqa.selenium.remote.http.Contents.utf8String
+import org.openqa.selenium.remote.http.Filter
+import org.openqa.selenium.remote.http.HttpHandler
+import org.openqa.selenium.remote.http.HttpResponse
+import java.net.HttpURLConnection.HTTP_OK
 import java.net.NetworkInterface
 import java.net.URL
 import java.net.URLEncoder
@@ -107,8 +115,27 @@ class Steps {
     }
 
     @Step("Content of downloaded <actual> equals to <expected>")
-    fun contentEquals(actual: String, expected: String) {
+    fun downloadedContentEquals(actual: String, expected: String) {
         downloadDir.value.inputStream(actual).readAllBytes() shouldBeEqualTo read(expected).readAllBytes()
+    }
+
+    @Step("When accessing <url> then <content> will be returned")
+    fun interceptRequest(url: String, content: String) {
+        val hasDevTools = (WebDriverRunner.getAndCheckWebDriver() as RemoteWebDriver).let(::HasDevToolsRemoteWebDriver)
+        NetworkInterceptor(hasDevTools, Filter { next ->
+            HttpHandler { request ->
+                if (request.uri == url) {
+                    HttpResponse().setStatus(HTTP_OK).setContent(utf8String("<html>$content</html>"))
+                } else {
+                    next.execute(request)
+                }
+            }
+        })
+    }
+
+    @Step("Page content equals to <content>")
+    fun pageContentEquals(content: String) {
+        `$`("html").shouldHave(exactText(content))
     }
 
     private fun loadProperties(): Properties {

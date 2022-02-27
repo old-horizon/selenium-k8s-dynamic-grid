@@ -1,10 +1,10 @@
 package com.github.old_horizon.selenium.grid.node;
 
+import com.github.old_horizon.selenium.grid.node.downloads.DeleteFile;
 import com.github.old_horizon.selenium.grid.node.downloads.DeleteFiles;
+import com.github.old_horizon.selenium.grid.node.downloads.GetFile;
 import com.github.old_horizon.selenium.grid.node.downloads.ListFiles;
 import com.github.old_horizon.selenium.k8s.KubernetesDriver;
-import com.github.old_horizon.selenium.grid.node.downloads.DeleteFile;
-import com.github.old_horizon.selenium.grid.node.downloads.GetFile;
 import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

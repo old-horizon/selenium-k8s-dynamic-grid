@@ -12,6 +12,14 @@ Deploying Helm Chart located in `kubernetes/helm` is the easiest way.
 
 Use Skaffold with config file stored at `kubernetes/skaffold`.
 
+## BiDirectional functionality support
+
+Chrome DevTools Protocol (CDP) and WebDriver BiDirectional API are available.
+
+Unfortunately you cannot activate them by using Augmenter class like as the official Grid for now.
+
+Please check `e2e/src/test/kotlin/com/github/old_horizon/selenium/HasDevToolsRemoteWebDriver.kt` to find the procedure to use. 
+
 ## File download support
 
 This extension has ability to access files downloaded with browser.
@@ -29,4 +37,4 @@ Deletes specified file.
 
 ## Special thanks
 
-This project is highly inspired by Zalenium and Selenoid, which provides same functions for Selenium Grid 3.
+This project is highly inspired by Zalenium and Selenoid, which provides similar functions for Selenium Grid 3.
