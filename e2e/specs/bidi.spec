@@ -1,4 +1,4 @@
-# Chrome DevTools Protocol
+# BiDirectional functionality
 
 ## Network Interceptor
 * When accessing "http://cdp.test/" then "CDP Test" will be returned

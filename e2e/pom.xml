@@ -80,6 +80,12 @@
             <version>5.12.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.12.8</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -64,7 +64,7 @@ spec:
             - name: videos
               mountPath: /videos
         - name: proxy
-          image: "nginx:alpine"
+          image: "openresty/openresty:alpine"
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

@@ -24,6 +24,25 @@ data:
             proxy_pass http://localhost:5555;
         }
 
+        location = /wd/hub/session {
+            access_by_lua_block {
+                ngx.req.read_body()
+                local cjson = require 'cjson'
+                local res = cjson.decode(ngx.location.capture('/_hub/wd/hub/session', { method = ngx.HTTP_POST, always_forward_body = true }).body)
+                if res['value']['capabilities']['se:cdp'] then
+                    local path, r, err = ngx.re.sub(res['value']['capabilities']['se:cdp'], "^ws:\\/\\/.[^\\/]+(.+)$", "$1")
+                    res['value']['capabilities']['se:cdp'] = 'ws://' .. ngx.var.http_host .. path
+                end
+                ngx.say(cjson.encode(res))
+            }
+        }
+
+        location /_hub {
+            internal;
+            rewrite ^/[^/]*/(.*) /$1 break;
+            proxy_pass http://localhost:4444;
+        }
+
         location / {
             proxy_http_version 1.1;
             proxy_pass http://localhost:4444;

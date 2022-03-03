@@ -16,9 +16,7 @@ Use Skaffold with config file stored at `kubernetes/skaffold`.
 
 Chrome DevTools Protocol (CDP) and WebDriver BiDirectional API are available.
 
-Unfortunately you cannot activate them by using Augmenter class like as the official Grid for now.
-
-Please check `e2e/src/test/kotlin/com/github/old_horizon/selenium/HasDevToolsRemoteWebDriver.kt` to find the procedure to use. 
+Pass RemoteWebDriver instance to `org.openqa.selenium.remote.Augmenter#augment` for activation.
 
 ## File download support
 
