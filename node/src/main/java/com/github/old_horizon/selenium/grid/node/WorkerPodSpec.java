@@ -17,6 +17,7 @@ abstract class WorkerPodSpec implements PodSpec {
 
     private static final int WORKER_PORT = 4444;
 
+    final ImagePullPolicy imagePullPolicy;
     final DockerImage image;
     final ResourceRequests resourceRequests;
     final Optional<Dimension> screenResolution;
@@ -24,8 +25,9 @@ abstract class WorkerPodSpec implements PodSpec {
     private final Optional<TimeZone> timeZone;
     private final OwnerReference owner;
 
-    WorkerPodSpec(DockerImage image, ResourceRequests resourceRequests, Optional<Dimension> screenResolution,
-                  Optional<TimeZone> timeZone, OwnerReference owner) {
+    WorkerPodSpec(ImagePullPolicy imagePullPolicy, DockerImage image, ResourceRequests resourceRequests,
+                  Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
+        this.imagePullPolicy = imagePullPolicy;
         this.image = image;
         this.resourceRequests = resourceRequests;
         this.screenResolution = screenResolution;
@@ -120,9 +122,9 @@ abstract class WorkerPodSpec implements PodSpec {
 
     static class Default extends WorkerPodSpec {
 
-        Default(DockerImage image, ResourceRequests resourceRequests, Optional<Dimension> screenResolution,
-                Optional<TimeZone> timeZone, OwnerReference owner) {
-            super(image, resourceRequests, screenResolution, timeZone, owner);
+        Default(ImagePullPolicy imagePullPolicy, DockerImage image, ResourceRequests resourceRequests,
+                Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
+            super(imagePullPolicy, image, resourceRequests, screenResolution, timeZone, owner);
         }
 
         @Override
@@ -136,7 +138,7 @@ abstract class WorkerPodSpec implements PodSpec {
             var containerSpec = spec.addNewContainer()
                                     .withName(WORKER_CONTAINER_NAME.getValue())
                                     .withImage(image.getValue())
-                                    .withImagePullPolicy(ImagePullPolicy.IfNotPresent.name())
+                                    .withImagePullPolicy(imagePullPolicy.name())
                                     .addNewVolumeMount()
                                         .withName(DSHM_VOLUME_NAME)
                                         .withMountPath("/dev/shm")
@@ -161,9 +163,10 @@ abstract class WorkerPodSpec implements PodSpec {
 
         private final DockerImage videoImage;
 
-        VideoRecording(DockerImage image, DockerImage videoImage, ResourceRequests resourceRequests,
-                       Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
-            super(image, resourceRequests, screenResolution, timeZone, owner);
+        VideoRecording(ImagePullPolicy imagePullPolicy, DockerImage image, DockerImage videoImage,
+                       ResourceRequests resourceRequests, Optional<Dimension> screenResolution,
+                       Optional<TimeZone> timeZone, OwnerReference owner) {
+            super(imagePullPolicy, image, resourceRequests, screenResolution, timeZone, owner);
             this.videoImage = videoImage;
         }
 
@@ -188,7 +191,7 @@ abstract class WorkerPodSpec implements PodSpec {
             var containerSpec = spec.addNewContainer()
                                     .withName(WORKER_CONTAINER_NAME.getValue())
                                     .withImage(image.getValue())
-                                    .withImagePullPolicy(ImagePullPolicy.IfNotPresent.name())
+                                    .withImagePullPolicy(imagePullPolicy.name())
                                     .addNewVolumeMount()
                                         .withName(DSHM_VOLUME_NAME)
                                         .withMountPath("/dev/shm")
@@ -223,7 +226,7 @@ abstract class WorkerPodSpec implements PodSpec {
             var containerSpec = spec.addNewContainer()
                                     .withName(VIDEO_CONTAINER_NAME.getValue())
                                     .withImage(videoImage.getValue())
-                                    .withImagePullPolicy(ImagePullPolicy.IfNotPresent.name())
+                                    .withImagePullPolicy(imagePullPolicy.name())
                                     .addNewVolumeMount()
                                         .withName(VIDEOS_VOLUME_NAME)
                                         .withMountPath(VIDEOS_PATH.toString())

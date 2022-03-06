@@ -1,6 +1,7 @@
 package com.github.old_horizon.selenium.grid.node;
 
 import com.github.old_horizon.selenium.k8s.DockerImage;
+import com.github.old_horizon.selenium.k8s.ImagePullPolicy;
 import com.google.common.collect.Iterables;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.json.Json;
@@ -46,6 +47,18 @@ public class KubernetesOptions {
 
     public int getMaxSessions() {
         return getInt("max-sessions").orElse(DEFAULT_MAX_SESSIONS);
+    }
+
+    public Duration getWorkerStartupTimeout() {
+        return getInt("worker-startup-timeout").map(Duration::ofSeconds).orElseGet(() -> Duration.ofMinutes(1));
+    }
+
+    public ImagePullPolicy getWorkerImagePullPolicy() {
+        try {
+            return get("worker-image-pull-policy").map(ImagePullPolicy::valueOf).orElse(ImagePullPolicy.Always);
+        } catch (Exception e) {
+            return ImagePullPolicy.Always;
+        }
     }
 
     public WorkerResourceRequests getWorkerResourceRequests() {

@@ -13,8 +13,14 @@ data:
         "selenium/standalone-chrome:{{ .Chart.AppVersion }}", '{"browserName": "chrome"}',
         "selenium/standalone-edge:{{ .Chart.AppVersion }}", '{"browserName": "MicrosoftEdge"}'
     ]
-    max-sessions = {{ .Values.config.maxSessions }}
     videos-path = "/videos"
+    max-sessions = {{ .Values.config.maxSessions }}
+    {{- if .Values.worker.startupTimeout }}
+    worker-startup-timeout = {{ .Values.worker.startupTimeout }}
+    {{- end }}
+    {{- if .Values.worker.image.pullPolicy }}
+    worker-image-pull-policy = "{{ .Values.worker.image.pullPolicy }}"
+    {{- end }}
     {{- if .Values.worker.resources.requests.cpu }}
     worker-cpu-request = "{{ .Values.worker.resources.requests.cpu }}"
     {{- end }}

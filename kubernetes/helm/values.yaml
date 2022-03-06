@@ -16,6 +16,9 @@ node:
   resources: {}
 
 worker:
+  startupTimeout: 120
+  image:
+    pullPolicy: IfNotPresent
   resources:
     requests: {}
     limits: {}

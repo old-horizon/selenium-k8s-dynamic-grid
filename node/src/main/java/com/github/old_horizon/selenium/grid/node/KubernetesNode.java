@@ -156,6 +156,7 @@ public class KubernetesNode extends Node {
                     var image = config.getImage();
                     var stereoType = config.getStereoType();
                     var factory = new KubernetesSessionFactory(tracer, clientFactory, driver,
+                            k8sOptions.getWorkerStartupTimeout(), k8sOptions.getWorkerImagePullPolicy(),
                             k8sOptions.getWorkerResourceRequests(), image, stereoType, k8sOptions.getVideoImage(),
                             k8sOptions.getVideosPath());
                     return new SessionSlot(eventBus, stereoType, factory);

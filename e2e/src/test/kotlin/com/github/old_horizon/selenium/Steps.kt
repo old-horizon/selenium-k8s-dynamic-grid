@@ -13,9 +13,11 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient
 import io.github.rybalkinsd.kohttp.dsl.httpHead
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo
+import org.openqa.selenium.devtools.HasDevTools
 import org.openqa.selenium.devtools.NetworkInterceptor
 import org.openqa.selenium.logging.LogType
 import org.openqa.selenium.remote.Augmenter
+import org.openqa.selenium.remote.RemoteWebDriver
 import org.openqa.selenium.remote.http.Contents.utf8String
 import org.openqa.selenium.remote.http.Filter
 import org.openqa.selenium.remote.http.HttpHandler
@@ -121,7 +123,11 @@ class Steps {
 
     @Step("When accessing <url> then <content> will be returned")
     fun interceptRequest(url: String, content: String) {
-        val hasDevTools = Augmenter().augment(WebDriverRunner.getAndCheckWebDriver())
+        val hasDevTools = when(val webDriver = WebDriverRunner.getAndCheckWebDriver()) {
+            is HasDevTools -> webDriver
+            is RemoteWebDriver -> Augmenter().augment(webDriver)
+            else -> throw IllegalArgumentException("Unexpected webDriver: ${webDriver.javaClass.name}")
+        }
         NetworkInterceptor(hasDevTools, Filter { next ->
             HttpHandler { request ->
                 if (request.uri == url) {
