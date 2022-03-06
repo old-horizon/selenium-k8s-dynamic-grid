@@ -6,7 +6,7 @@
     <groupId>com.github.old_horizon.selenium</groupId>
     <artifactId>selenium-k8s-dynamic-grid</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <modules>
         <module>hub</module>
         <module>node</module>
