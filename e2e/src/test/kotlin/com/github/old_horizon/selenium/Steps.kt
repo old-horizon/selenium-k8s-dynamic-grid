@@ -19,9 +19,9 @@ import org.openqa.selenium.logging.LogType
 import org.openqa.selenium.remote.Augmenter
 import org.openqa.selenium.remote.RemoteWebDriver
 import org.openqa.selenium.remote.http.Contents.utf8String
-import org.openqa.selenium.remote.http.Filter
 import org.openqa.selenium.remote.http.HttpHandler
 import org.openqa.selenium.remote.http.HttpResponse
+import org.openqa.selenium.remote.http.Route
 import java.net.HttpURLConnection.HTTP_OK
 import java.net.NetworkInterface
 import java.net.URL
@@ -29,6 +29,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 class Steps {
     private val props = loadProperties()
@@ -123,20 +124,14 @@ class Steps {
 
     @Step("When accessing <url> then <content> will be returned")
     fun interceptRequest(url: String, content: String) {
-        val hasDevTools = when(val webDriver = WebDriverRunner.getAndCheckWebDriver()) {
+        val hasDevTools = when (val webDriver = WebDriverRunner.getAndCheckWebDriver()) {
             is HasDevTools -> webDriver
             is RemoteWebDriver -> Augmenter().augment(webDriver)
             else -> throw IllegalArgumentException("Unexpected webDriver: ${webDriver.javaClass.name}")
         }
-        NetworkInterceptor(hasDevTools, Filter { next ->
-            HttpHandler { request ->
-                if (request.uri == url) {
-                    HttpResponse().setStatus(HTTP_OK).setContent(utf8String("<html>$content</html>"))
-                } else {
-                    next.execute(request)
-                }
-            }
-        })
+        NetworkInterceptor(hasDevTools, Route.get(url).to(Supplier {
+            HttpHandler { HttpResponse().setStatus(HTTP_OK).setContent(utf8String("<html>$content</html>")) }
+        }))
     }
 
     @Step("Page content equals to <content>")
