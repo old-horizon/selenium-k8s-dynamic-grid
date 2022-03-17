@@ -13,6 +13,8 @@ data:
         "selenium/standalone-chrome:{{ .Chart.AppVersion }}", '{"browserName": "chrome"}',
         "selenium/standalone-edge:{{ .Chart.AppVersion }}", '{"browserName": "MicrosoftEdge"}'
     ]
+    video-image = "{{ .Values.worker.videoImage.repository }}:{{ .Values.worker.videoImage.tag }}"
+    video-image-pull-policy = "{{ .Values.worker.videoImage.pullPolicy }}"
     videos-path = "/videos"
     max-sessions = {{ .Values.config.maxSessions }}
     {{- if .Values.worker.startupTimeout }}

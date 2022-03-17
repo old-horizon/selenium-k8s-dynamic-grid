@@ -41,6 +41,14 @@ public class KubernetesOptions {
         return new DockerImage(get("video-image").orElse(DEFAULT_VIDEO_IMAGE));
     }
 
+    public ImagePullPolicy getVideoImagePullPolicy() {
+        try {
+            return get("video-image-pull-policy").map(ImagePullPolicy::valueOf).orElse(ImagePullPolicy.Always);
+        } catch (Exception e) {
+            return ImagePullPolicy.Always;
+        }
+    }
+
     public Optional<Path> getVideosPath() {
         return get("videos-path").map(Path::of);
     }

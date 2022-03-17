@@ -42,26 +42,29 @@ public class KubernetesSessionFactory implements SessionFactory {
     private final HttpClient.Factory clientFactory;
     private final KubernetesDriver k8s;
     private final Duration workerStartupTimeout;
-    private final ImagePullPolicy imagePullPolicy;
+    private final ImagePullPolicy workerImagePullPolicy;
     private final ResourceRequests resourceRequests;
-    private final DockerImage dockerImage;
+    private final DockerImage workerImage;
     private final Capabilities stereoType;
     private final DockerImage videoImage;
+    private final ImagePullPolicy videoImagePullPolicy;
     private final Optional<Path> videosPath;
 
     public KubernetesSessionFactory(Tracer tracer, HttpClient.Factory clientFactory, KubernetesDriver k8s,
-                                    Duration workerStartupTimeout, ImagePullPolicy imagePullPolicy,
-                                    ResourceRequests resourceRequests, DockerImage dockerImage, Capabilities stereoType,
-                                    DockerImage videoImage, Optional<Path> videosPath) {
+                                    Duration workerStartupTimeout, ResourceRequests resourceRequests,
+                                    DockerImage workerImage, ImagePullPolicy workerImagePullPolicy,
+                                    Capabilities stereoType, DockerImage videoImage, ImagePullPolicy videoImagePullPolicy,
+                                    Optional<Path> videosPath) {
         this.tracer = tracer;
         this.clientFactory = clientFactory;
         this.k8s = k8s;
         this.workerStartupTimeout = workerStartupTimeout;
-        this.imagePullPolicy = imagePullPolicy;
         this.resourceRequests = resourceRequests;
-        this.dockerImage = dockerImage;
+        this.workerImage = workerImage;
+        this.workerImagePullPolicy = workerImagePullPolicy;
         this.stereoType = stereoType;
         this.videoImage = videoImage;
+        this.videoImagePullPolicy = videoImagePullPolicy;
         this.videosPath = videosPath;
     }
 
@@ -136,10 +139,10 @@ public class KubernetesSessionFactory implements SessionFactory {
         var screenResolution = getScreenResolution(desiredCapabilities);
         var timeZone = getTimeZone(desiredCapabilities);
         return recordVideo(desiredCapabilities) ?
-                new WorkerPodSpec.VideoRecording(imagePullPolicy, dockerImage, videoImage, resourceRequests,
-                        screenResolution, timeZone, getSelfReference()) :
-                new WorkerPodSpec.Default(imagePullPolicy, dockerImage, resourceRequests, screenResolution, timeZone,
-                        getSelfReference());
+                new WorkerPodSpec.VideoRecording(workerImage, workerImagePullPolicy, videoImage, videoImagePullPolicy,
+                        resourceRequests, screenResolution, timeZone, getSelfReference()) :
+                new WorkerPodSpec.Default(workerImage, workerImagePullPolicy, resourceRequests, screenResolution,
+                        timeZone, getSelfReference());
     }
 
     Optional<Dimension> getScreenResolution(Capabilities desiredCapabilities) {

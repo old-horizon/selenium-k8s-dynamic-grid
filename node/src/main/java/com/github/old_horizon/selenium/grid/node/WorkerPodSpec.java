@@ -25,7 +25,7 @@ abstract class WorkerPodSpec implements PodSpec {
     private final Optional<TimeZone> timeZone;
     private final OwnerReference owner;
 
-    WorkerPodSpec(ImagePullPolicy imagePullPolicy, DockerImage image, ResourceRequests resourceRequests,
+    WorkerPodSpec(DockerImage image, ImagePullPolicy imagePullPolicy, ResourceRequests resourceRequests,
                   Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
         this.imagePullPolicy = imagePullPolicy;
         this.image = image;
@@ -122,9 +122,9 @@ abstract class WorkerPodSpec implements PodSpec {
 
     static class Default extends WorkerPodSpec {
 
-        Default(ImagePullPolicy imagePullPolicy, DockerImage image, ResourceRequests resourceRequests,
+        Default(DockerImage image, ImagePullPolicy imagePullPolicy, ResourceRequests resourceRequests,
                 Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
-            super(imagePullPolicy, image, resourceRequests, screenResolution, timeZone, owner);
+            super(image, imagePullPolicy, resourceRequests, screenResolution, timeZone, owner);
         }
 
         @Override
@@ -162,12 +162,14 @@ abstract class WorkerPodSpec implements PodSpec {
         private static final String VIDEOS_VOLUME_NAME = "videos";
 
         private final DockerImage videoImage;
+        private final ImagePullPolicy videoImagePullPolicy;
 
-        VideoRecording(ImagePullPolicy imagePullPolicy, DockerImage image, DockerImage videoImage,
-                       ResourceRequests resourceRequests, Optional<Dimension> screenResolution,
-                       Optional<TimeZone> timeZone, OwnerReference owner) {
-            super(imagePullPolicy, image, resourceRequests, screenResolution, timeZone, owner);
+        VideoRecording(DockerImage workerImage, ImagePullPolicy workerImagePullPolicy, DockerImage videoImage,
+                       ImagePullPolicy videoImagePullPolicy, ResourceRequests resourceRequests,
+                       Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
+            super(workerImage, workerImagePullPolicy, resourceRequests, screenResolution, timeZone, owner);
             this.videoImage = videoImage;
+            this.videoImagePullPolicy = videoImagePullPolicy;
         }
 
         ContainerName getVideoContainerName() {
@@ -226,7 +228,7 @@ abstract class WorkerPodSpec implements PodSpec {
             var containerSpec = spec.addNewContainer()
                                     .withName(VIDEO_CONTAINER_NAME.getValue())
                                     .withImage(videoImage.getValue())
-                                    .withImagePullPolicy(imagePullPolicy.name())
+                                    .withImagePullPolicy(videoImagePullPolicy.name())
                                     .addNewVolumeMount()
                                         .withName(VIDEOS_VOLUME_NAME)
                                         .withMountPath(VIDEOS_PATH.toString())

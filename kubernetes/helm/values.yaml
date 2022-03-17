@@ -19,6 +19,10 @@ worker:
   startupTimeout: 120
   image:
     pullPolicy: IfNotPresent
+  videoImage:
+    repository: selenium/video
+    pullPolicy: IfNotPresent
+    tag: "latest"
   resources:
     requests: {}
     limits: {}
