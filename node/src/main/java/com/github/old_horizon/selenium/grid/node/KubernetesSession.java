@@ -2,6 +2,8 @@ package com.github.old_horizon.selenium.grid.node;
 
 import com.github.old_horizon.selenium.k8s.KubernetesDriver;
 import com.github.old_horizon.selenium.k8s.PodName;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.grid.node.ProtocolConvertingSession;
 import org.openqa.selenium.remote.Dialect;
@@ -12,10 +14,10 @@ import org.openqa.selenium.remote.tracing.Tracer;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 public class KubernetesSession extends ProtocolConvertingSession {
 
@@ -54,10 +56,16 @@ public class KubernetesSession extends ProtocolConvertingSession {
 
     void copyRecordedVideo(PodName podName, WorkerPodSpec.VideoRecording spec, SessionId sessionId) {
         k8s.executeCommand(podName, spec.getVideoContainerName(), new String[]{"pkill", "-SIGINT", "ffmpeg"});
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ignore) {
-        }
+
+        var retryPolicy = new RetryPolicy<String>()
+                .withMaxRetries(-1)
+                .withMaxDuration(Duration.ofMinutes(1))
+                .withDelay(Duration.ofMillis(500))
+                .handleResultIf(v -> !v.trim().isEmpty());
+
+        Failsafe.with(retryPolicy).get(() ->
+                k8s.executeCommand(podName, spec.getVideoContainerName(), new String[]{"pgrep", "ffmpeg"}));
+
         k8s.copyFile(podName, spec.getWorkerContainerName(), spec.getVideosPath().resolve("video.mp4"),
                 videosPath.get().resolve(sessionId.toString() + ".mp4"));
     }
