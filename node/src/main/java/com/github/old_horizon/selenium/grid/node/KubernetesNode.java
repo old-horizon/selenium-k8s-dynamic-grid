@@ -11,7 +11,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import org.openqa.selenium.*;
-import org.openqa.selenium.concurrent.Regularly;
+import org.openqa.selenium.concurrent.GuardedRunnable;
 import org.openqa.selenium.events.EventBus;
 import org.openqa.selenium.grid.config.Config;
 import org.openqa.selenium.grid.config.ConfigException;
@@ -45,6 +45,8 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -96,10 +98,24 @@ public class KubernetesNode extends Node {
                 })
                 .build();
 
-        var sessionCleanup = new Regularly("Session Cleanup Node: " + uri);
-        sessionCleanup.submit(currentSessions::cleanUp, Duration.ofSeconds(30), Duration.ofSeconds(30));
-        var regularHeartBeat = new Regularly("Heartbeat Node: " + uri);
-        regularHeartBeat.submit(() -> bus.fire(new NodeHeartBeatEvent(getStatus())), heartbeatPeriod, heartbeatPeriod);
+        var sessionCleanupNodeService = Executors.newSingleThreadScheduledExecutor(r -> {
+           var thread = new Thread(r);
+           thread.setDaemon(true);
+           thread.setName("Kubernetes Node - Session Cleanup " + uri);
+           return thread;
+        });
+        sessionCleanupNodeService.scheduleAtFixedRate(
+                GuardedRunnable.guard(currentSessions::cleanUp), 30, 30, TimeUnit.SECONDS);
+
+        var heartbeatNodeService = Executors.newSingleThreadScheduledExecutor(r -> {
+            var thread = new Thread(r);
+            thread.setDaemon(true);
+            thread.setName("HeartBeat Node " + uri);
+            return thread;
+        });
+        heartbeatNodeService.scheduleAtFixedRate(
+                GuardedRunnable.guard(() -> bus.fire(new NodeHeartBeatEvent(getStatus()))),
+                heartbeatPeriod.getSeconds(), heartbeatPeriod.getSeconds(), TimeUnit.SECONDS);
 
         bus.addListener(SessionClosedEvent.listener(id -> {
             if (this.isDraining() && pendingSessions.decrementAndGet() <= 0) {

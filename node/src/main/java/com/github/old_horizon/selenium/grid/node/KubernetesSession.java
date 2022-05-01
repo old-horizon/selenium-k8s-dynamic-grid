@@ -2,8 +2,8 @@ package com.github.old_horizon.selenium.grid.node;
 
 import com.github.old_horizon.selenium.k8s.KubernetesDriver;
 import com.github.old_horizon.selenium.k8s.PodName;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
+import dev.failsafe.Failsafe;
+import dev.failsafe.RetryPolicy;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.grid.node.ProtocolConvertingSession;
 import org.openqa.selenium.remote.Dialect;
@@ -57,11 +57,12 @@ public class KubernetesSession extends ProtocolConvertingSession {
     void copyRecordedVideo(PodName podName, WorkerPodSpec.VideoRecording spec, SessionId sessionId) {
         k8s.executeCommand(podName, spec.getVideoContainerName(), new String[]{"pkill", "-SIGINT", "ffmpeg"});
 
-        var retryPolicy = new RetryPolicy<String>()
+        var retryPolicy = RetryPolicy.<String>builder()
                 .withMaxRetries(-1)
                 .withMaxDuration(Duration.ofMinutes(1))
                 .withDelay(Duration.ofMillis(500))
-                .handleResultIf(v -> !v.trim().isEmpty());
+                .handleResultIf(v -> !v.trim().isEmpty())
+                .build();
 
         Failsafe.with(retryPolicy).get(() ->
                 k8s.executeCommand(podName, spec.getVideoContainerName(), new String[]{"pgrep", "ffmpeg"}));

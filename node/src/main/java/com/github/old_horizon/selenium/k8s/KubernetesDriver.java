@@ -1,10 +1,10 @@
 package com.github.old_horizon.selenium.k8s;
 
+import dev.failsafe.Failsafe;
+import dev.failsafe.RetryPolicy;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.ExecListener;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,11 +35,12 @@ public class KubernetesDriver {
     }
 
     public Ip getPodIp(PodName name) {
-        var retryPolicy = new RetryPolicy<String>()
+        var retryPolicy = RetryPolicy.<String>builder()
                 .withMaxRetries(-1)
                 .withMaxDuration(Duration.ofMinutes(1))
                 .withDelay(Duration.ofMillis(500))
-                .handleResultIf(Objects::isNull);
+                .handleResultIf(Objects::isNull)
+                .build();
 
         var ip = Failsafe.with(retryPolicy).get(() ->
                 client.pods().withName(name.getValue()).get().getStatus().getPodIP());

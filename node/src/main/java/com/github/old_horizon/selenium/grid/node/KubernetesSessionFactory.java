@@ -1,11 +1,13 @@
 package com.github.old_horizon.selenium.grid.node;
 
 import com.github.old_horizon.selenium.k8s.*;
+import dev.failsafe.Failsafe;
+import dev.failsafe.RetryPolicy;
 import io.fabric8.kubernetes.api.model.OwnerReference;
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 import org.openqa.selenium.*;
 import org.openqa.selenium.grid.data.CreateSessionRequest;
+import org.openqa.selenium.grid.data.DefaultSlotMatcher;
+import org.openqa.selenium.grid.data.SlotMatcher;
 import org.openqa.selenium.grid.node.ActiveSession;
 import org.openqa.selenium.grid.node.SessionFactory;
 import org.openqa.selenium.internal.Either;
@@ -49,6 +51,7 @@ public class KubernetesSessionFactory implements SessionFactory {
     private final DockerImage videoImage;
     private final ImagePullPolicy videoImagePullPolicy;
     private final Optional<Path> videosPath;
+    private final SlotMatcher slotMatcher;
 
     public KubernetesSessionFactory(Tracer tracer, HttpClient.Factory clientFactory, KubernetesDriver k8s,
                                     Duration workerStartupTimeout, ResourceRequests resourceRequests,
@@ -66,6 +69,7 @@ public class KubernetesSessionFactory implements SessionFactory {
         this.videoImage = videoImage;
         this.videoImagePullPolicy = videoImagePullPolicy;
         this.videosPath = videosPath;
+        this.slotMatcher = new DefaultSlotMatcher();
     }
 
     @Override
@@ -129,10 +133,7 @@ public class KubernetesSessionFactory implements SessionFactory {
 
     @Override
     public boolean test(Capabilities capabilities) {
-        return stereoType.getCapabilityNames().stream()
-                .map(name -> Objects.equals(stereoType.getCapability(name), capabilities.getCapability(name)))
-                .reduce(Boolean::logicalAnd)
-                .orElse(false);
+        return slotMatcher.matches(stereoType, capabilities);
     }
 
     WorkerPodSpec getWorkerPodSpec(Capabilities desiredCapabilities) {
@@ -194,11 +195,12 @@ public class KubernetesSessionFactory implements SessionFactory {
     }
 
     void waitForServerToStart(HttpClient client, Duration duration) {
-        var retryPolicy = new RetryPolicy<Integer>()
+        var retryPolicy = RetryPolicy.<Integer>builder()
                 .withMaxRetries(-1)
                 .withMaxDuration(duration)
                 .withDelay(5, 10, ChronoUnit.SECONDS)
-                .handleResultIf(status -> status != 200);
+                .handleResultIf(status -> status != 200)
+                .build();
 
         Failsafe.with(retryPolicy).get(() -> {
             var response = client.execute(new HttpRequest(GET, "/status"));
