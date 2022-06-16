@@ -2,14 +2,6 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "selenium-dynamic-grid.hub.fullname" -}}
-{{- default "hub" .Values.hub.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{- define "selenium-dynamic-grid.node.fullname" -}}
-{{- default "hub" .Values.node.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
 {{- define "selenium-dynamic-grid.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}

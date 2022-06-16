@@ -1,18 +1,11 @@
-hub:
+grid:
   image:
-    repository: oldhorizon/selenium/dynamic-grid-hub
+    repository: oldhorizon/selenium/dynamic-grid
     pullPolicy: IfNotPresent
     tag: "latest"
   service:
     type: NodePort
     sourceRanges: []
-  resources: {}
-
-node:
-  image:
-    repository: oldhorizon/selenium/dynamic-grid-node
-    pullPolicy: IfNotPresent
-    tag: "latest"
   resources: {}
 
 worker:

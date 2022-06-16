@@ -10,7 +10,7 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
-  type: "{{ .Values.hub.service.type }}"
-  {{- if eq .Values.hub.service.type "LoadBalancer" }}
-  loadBalancerSourceRanges: {{ .Values.hub.service.sourceRanges }}
+  type: "{{ .Values.grid.service.type }}"
+  {{- if eq .Values.grid.service.type "LoadBalancer" }}
+  loadBalancerSourceRanges: {{ .Values.grid.service.sourceRanges }}
   {{- end }}

@@ -14,14 +14,10 @@ spec:
     spec:
       serviceAccountName: {{ include "selenium-dynamic-grid.serviceAccountName" . }}
       containers:
-        - name: hub
-          image: "{{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag }}"
-          imagePullPolicy: {{ .Values.node.image.pullPolicy }}
+        - name: grid
+          image: "{{ .Values.grid.image.repository }}:{{ .Values.grid.image.tag }}"
+          imagePullPolicy: {{ .Values.grid.image.pullPolicy }}
           ports:
-            - containerPort: 4442
-              protocol: TCP
-            - containerPort: 4443
-              protocol: TCP
             - containerPort: 4444
               protocol: TCP
           livenessProbe:
@@ -33,32 +29,9 @@ spec:
               path: /readyz
               port: 4444
           resources:
-            {{- toYaml .Values.hub.resources | nindent 12 }}
-        - name: node
-          image: "{{ .Values.node.image.repository }}:{{ .Values.node.image.tag }}"
-          imagePullPolicy: {{ .Values.node.image.pullPolicy }}
-          ports:
-            - containerPort: 5555
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /readyz
-              port: 5555
-          readinessProbe:
-            httpGet:
-              path: /readyz
-              port: 5555
-          resources:
-            {{- toYaml .Values.node.resources | nindent 12 }}
-          env:
-            - name: SE_EVENT_BUS_HOST
-              value: "localhost"
-            - name: SE_EVENT_BUS_PUBLISH_PORT
-              value: "4442"
-            - name: SE_EVENT_BUS_SUBSCRIBE_PORT
-              value: "4443"
+            {{- toYaml .Values.grid.resources | nindent 12 }}
           volumeMounts:
-            - name: node-config
+            - name: grid-config
               mountPath: /opt/bin/config.toml
               subPath: config.toml
             - name: videos
@@ -76,9 +49,9 @@ spec:
             - name: videos
               mountPath: /videos
       volumes:
-        - name: node-config
+        - name: grid-config
           configMap:
-            name: node
+            name: grid
         - name: proxy-config
           configMap:
             name: proxy

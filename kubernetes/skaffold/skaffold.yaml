@@ -4,25 +4,19 @@ metadata:
   name: selenium-dynamic-grid
 build:
   artifacts:
-    - image: oldhorizon/selenium/dynamic-grid-hub
+    - image: oldhorizon/selenium/dynamic-grid
       context: ../..
       docker:
-        dockerfile: ../docker/hub/Dockerfile
-    - image: oldhorizon/selenium/dynamic-grid-node
-      context: ../..
-      docker:
-        dockerfile: ../docker/node/Dockerfile
+        dockerfile: ../docker/Dockerfile
   local:
     useBuildkit: true
 deploy:
   helm:
     releases:
-      - name: dynamic-grid-node
+      - name: selenium-dynamic-grid
         chartPath: ../helm
         artifactOverrides:
-          hub:
-            image: oldhorizon/selenium/dynamic-grid-hub
-          node:
-            image: oldhorizon/selenium/dynamic-grid-node
+          grid:
+            image: oldhorizon/selenium/dynamic-grid
         imageStrategy:
           helm: {}

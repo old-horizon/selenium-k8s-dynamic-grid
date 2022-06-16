@@ -15,7 +15,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-build-${{ hashFiles('pom.xml', 'hub/pom.xml', 'node/pom.xml') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-build-
       - name: build
@@ -25,8 +25,7 @@ jobs:
         with:
           name: artifacts
           path: |
-            hub/target/*.jar
-            node/target/*.jar
+            target/*.jar
           retention-days: 1
   e2e:
     runs-on: ubuntu-latest
@@ -86,5 +85,4 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            hub/target/*.jar
-            node/target/*.jar
+            target/*.jar
