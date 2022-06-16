@@ -5,7 +5,7 @@ WORKDIR /src/node
 RUN --mount=type=cache,target=/root/.m2 mvn clean package -B
 
 FROM openjdk:11-jre-slim
-ADD https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.1.0/selenium-server-4.1.4.jar /opt/selenium/selenium-server.jar
+ADD https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.2.0/selenium-server-4.2.2.jar /opt/selenium/selenium-server.jar
 COPY --from=builder /src/node/target/*.jar /opt/selenium/k8s-dynamic-grid-node.jar
 COPY --from=builder /src/kubernetes/docker/node/start-selenium-grid-kubernetes.sh /opt/bin/
 EXPOSE 5555
