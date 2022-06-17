@@ -4,9 +4,6 @@ metadata:
   name: grid
 data:
   config.toml: |
-    [node]
-    implementation = "com.github.old_horizon.selenium.grid.node.KubernetesNode"
-
     [kubernetes]
     configs = [
         "selenium/standalone-firefox:{{ .Chart.AppVersion }}", '{"browserName": "firefox"}',
