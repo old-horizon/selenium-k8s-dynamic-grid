@@ -3,12 +3,12 @@ package com.github.old_horizon.selenium
 import com.codeborne.selenide.Browser
 import com.codeborne.selenide.Config
 import com.codeborne.selenide.webdriver.ChromeDriverFactory
-import org.openqa.selenium.MutableCapabilities
 import org.openqa.selenium.Proxy
+import org.openqa.selenium.chrome.ChromeOptions
 import java.io.File
 
 class CustomChromeDriverFactory : ChromeDriverFactory() {
-    override fun createCapabilities(config: Config, browser: Browser, proxy: Proxy?, browserDownloadsFolder: File?): MutableCapabilities =
+    override fun createCapabilities(config: Config, browser: Browser, proxy: Proxy?, browserDownloadsFolder: File?): ChromeOptions =
             super.createCapabilities(config, browser, proxy, browserDownloadsFolder)
                     .apply {
                         setCapability("se:recordVideo", true)

@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <kotlin.version>1.6.10</kotlin.version>
+        <kotlin.version>1.7.0</kotlin.version>
     </properties>
 
     <dependencies>
@@ -29,7 +29,7 @@
         <dependency>
             <groupId>com.thoughtworks.gauge</groupId>
             <artifactId>gauge-java</artifactId>
-            <version>0.8.1</version>
+            <version>0.9.1</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -65,7 +65,7 @@
         <dependency>
             <groupId>com.codeborne</groupId>
             <artifactId>selenide</artifactId>
-            <version>6.4.0</version>
+            <version>6.6.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <version>1.12.9</version>
+            <version>1.12.10</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
