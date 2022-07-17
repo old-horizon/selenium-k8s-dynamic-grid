@@ -29,6 +29,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static org.openqa.selenium.remote.Dialect.W3C;
 import static org.openqa.selenium.remote.http.Contents.string;
@@ -139,11 +140,12 @@ public class KubernetesSessionFactory implements SessionFactory {
     WorkerPodSpec getWorkerPodSpec(Capabilities desiredCapabilities) {
         var screenResolution = getScreenResolution(desiredCapabilities);
         var timeZone = getTimeZone(desiredCapabilities);
+        var envVars = getEnvVars();
         return recordVideo(desiredCapabilities) ?
                 new WorkerPodSpec.VideoRecording(workerImage, workerImagePullPolicy, videoImage, videoImagePullPolicy,
-                        resourceRequests, screenResolution, timeZone, getSelfReference()) :
+                        resourceRequests, screenResolution, timeZone, envVars, getSelfReference()) :
                 new WorkerPodSpec.Default(workerImage, workerImagePullPolicy, resourceRequests, screenResolution,
-                        timeZone, getSelfReference());
+                        timeZone, envVars, getSelfReference());
     }
 
     Optional<Dimension> getScreenResolution(Capabilities desiredCapabilities) {
@@ -172,6 +174,11 @@ public class KubernetesSessionFactory implements SessionFactory {
                         .filter(tz::equals)
                         .findFirst()
                         .map(TimeZone::getTimeZone));
+    }
+
+    Map<String, String> getEnvVars() {
+        return System.getenv().entrySet().stream().filter(e -> e.getKey().startsWith("SE_"))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     boolean recordVideo(Capabilities desiredCapabilities) {

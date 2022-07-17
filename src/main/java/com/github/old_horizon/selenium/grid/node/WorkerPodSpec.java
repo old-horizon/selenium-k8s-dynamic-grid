@@ -7,6 +7,7 @@ import org.openqa.selenium.Dimension;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
 
@@ -23,15 +24,18 @@ abstract class WorkerPodSpec implements PodSpec {
     final Optional<Dimension> screenResolution;
 
     private final Optional<TimeZone> timeZone;
+    private Map<String, String> envVars;
     private final OwnerReference owner;
 
     WorkerPodSpec(DockerImage image, ImagePullPolicy imagePullPolicy, ResourceRequests resourceRequests,
-                  Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
+                  Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, Map<String, String> envVars,
+                  OwnerReference owner) {
         this.imagePullPolicy = imagePullPolicy;
         this.image = image;
         this.resourceRequests = resourceRequests;
         this.screenResolution = screenResolution;
         this.timeZone = timeZone;
+        this.envVars = envVars;
         this.owner = owner;
     }
 
@@ -80,11 +84,11 @@ abstract class WorkerPodSpec implements PodSpec {
             var sr = screenResolution.get();
             // @formatter:off
             spec.addNewEnv()
-                    .withName("SCREEN_WIDTH")
+                    .withName("SE_SCREEN_WIDTH")
                     .withValue(Integer.toString(sr.getWidth()))
                 .endEnv()
                 .addNewEnv()
-                    .withName("SCREEN_HEIGHT")
+                    .withName("SE_SCREEN_HEIGHT")
                     .withValue(Integer.toString(sr.getHeight()))
                 .endEnv();
             // @formatter:on
@@ -101,6 +105,17 @@ abstract class WorkerPodSpec implements PodSpec {
                 .endEnv();
             // @formatter:on
         }
+    }
+
+    void setEnvVars(PodSpecFluent.ContainersNested<PodFluent.SpecNested<PodBuilder>> spec) {
+        envVars.forEach((k, v) -> {
+            // @formatter:off
+            spec.addNewEnv()
+                    .withName(k)
+                    .withValue(v)
+                .endEnv();
+            // @formatter:on
+        });
     }
 
     abstract void customize(PodFluent.SpecNested<PodBuilder> spec);
@@ -123,8 +138,9 @@ abstract class WorkerPodSpec implements PodSpec {
     static class Default extends WorkerPodSpec {
 
         Default(DockerImage image, ImagePullPolicy imagePullPolicy, ResourceRequests resourceRequests,
-                Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
-            super(image, imagePullPolicy, resourceRequests, screenResolution, timeZone, owner);
+                Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, Map<String, String> envVars,
+                OwnerReference owner) {
+            super(image, imagePullPolicy, resourceRequests, screenResolution, timeZone, envVars, owner);
         }
 
         @Override
@@ -151,6 +167,7 @@ abstract class WorkerPodSpec implements PodSpec {
             applyResourceRequests(containerSpec);
             setWorkerScreenResolution(containerSpec);
             setTimeZone(containerSpec);
+            setEnvVars(containerSpec);
             containerSpec.endContainer();
         }
     }
@@ -166,8 +183,9 @@ abstract class WorkerPodSpec implements PodSpec {
 
         VideoRecording(DockerImage workerImage, ImagePullPolicy workerImagePullPolicy, DockerImage videoImage,
                        ImagePullPolicy videoImagePullPolicy, ResourceRequests resourceRequests,
-                       Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, OwnerReference owner) {
-            super(workerImage, workerImagePullPolicy, resourceRequests, screenResolution, timeZone, owner);
+                       Optional<Dimension> screenResolution, Optional<TimeZone> timeZone, Map<String, String> envVars,
+                       OwnerReference owner) {
+            super(workerImage, workerImagePullPolicy, resourceRequests, screenResolution, timeZone, envVars, owner);
             this.videoImage = videoImage;
             this.videoImagePullPolicy = videoImagePullPolicy;
         }
@@ -210,6 +228,7 @@ abstract class WorkerPodSpec implements PodSpec {
             applyResourceRequests(containerSpec);
             setWorkerScreenResolution(containerSpec);
             setTimeZone(containerSpec);
+            setEnvVars(containerSpec);
             containerSpec.endContainer();
         }
 
@@ -242,9 +261,13 @@ abstract class WorkerPodSpec implements PodSpec {
                 var sr = screenResolution.get();
                 // @formatter:off
                 containerSpec.addNewEnv()
-                                 .withName("VIDEO_SIZE")
-                                 .withValue(String.format("%sx%s", sr.getWidth(), sr.getHeight()))
-                             .endEnv();
+                            .withName("SE_SCREEN_WIDTH")
+                            .withValue(Integer.toString(sr.getWidth()))
+                        .endEnv()
+                        .addNewEnv()
+                            .withName("SE_SCREEN_HEIGHT")
+                            .withValue(Integer.toString(sr.getHeight()))
+                        .endEnv();
                 // @formatter:on
             }
             containerSpec.endContainer();

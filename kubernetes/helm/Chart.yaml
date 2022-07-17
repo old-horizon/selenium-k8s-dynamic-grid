@@ -3,4 +3,4 @@ name: selenium-dynamic-grid
 description: A Helm chart for Selenium dynamic grid in Kubernetes
 type: application
 version: 0.1.0
-appVersion: "4.2.2"
+appVersion: "4.3.0"
