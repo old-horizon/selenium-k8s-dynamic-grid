@@ -9,8 +9,8 @@
 
 ## Binary
 * Click "image" link
-* File "image.tiff" has downloaded
-* Content of downloaded "image.tiff" equals to "__files/image.tiff"
+* File "image.gif" has downloaded
+* Content of downloaded "image.gif" equals to "__files/image.gif"
 
 ## Multibyte name
 * Click "multibyte" link

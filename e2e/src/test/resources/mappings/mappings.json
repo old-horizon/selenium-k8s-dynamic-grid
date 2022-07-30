@@ -29,14 +29,14 @@
     {
       "request": {
         "method": "GET",
-        "url": "/image.tiff"
+        "url": "/image.gif"
       },
       "response": {
         "status": 200,
         "headers": {
-          "Content-Disposition": "attachment; filename=\"image.tiff\""
+          "Content-Disposition": "attachment; filename=\"image.gif\""
         },
-        "bodyFileName": "image.tiff"
+        "bodyFileName": "image.gif"
       }
     },
     {
@@ -50,6 +50,81 @@
           "Content-Disposition": "attachment; filename*=utf-8''%E3%83%9E%E3%83%AB%E3%83%81%E3%83%90%E3%82%A4%E3%83%88%E6%96%87%E5%AD%97.txt"
         },
         "bodyFileName": "text.txt"
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "/upload.html"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "bodyFileName": "upload.html"
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "/upload.html",
+        "multipartPatterns": [
+          {
+            "matchingType": "ANY",
+            "headers": {
+              "Content-Disposition": {
+                "contains": "filename=\"text.txt\""
+              },
+              "Content-Type": {
+                "equalTo": "text/plain"
+              }
+            },
+            "bodyPatterns": [
+              {
+                "binaryEqualTo": "dGV4dAo="
+              }
+            ]
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "body": "Text upload succeeded"
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "/upload.html",
+        "multipartPatterns": [
+          {
+            "matchingType": "ANY",
+            "headers": {
+              "Content-Disposition": {
+                "contains": "filename=\"image.gif\""
+              },
+              "Content-Type": {
+                "equalTo": "image/gif"
+              }
+            },
+            "bodyPatterns": [
+              {
+                "binaryEqualTo": "R0lGODlhAQABAGAAACH5BAEKAP8ALAAAAAABAAEAAAgEAP8FBAA7"
+              }
+            ]
+          }
+        ]
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "text/html"
+        },
+        "body": "Binary upload succeeded"
       }
     }
   ]

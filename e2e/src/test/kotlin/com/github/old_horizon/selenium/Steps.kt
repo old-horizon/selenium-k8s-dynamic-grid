@@ -2,9 +2,10 @@ package com.github.old_horizon.selenium
 
 import com.codeborne.selenide.Condition.exactText
 import com.codeborne.selenide.Configuration
+import com.codeborne.selenide.Selectors.byText
 import com.codeborne.selenide.Selenide
-import com.codeborne.selenide.Selenide.`$$`
 import com.codeborne.selenide.Selenide.`$`
+import com.codeborne.selenide.Selenide.`$$`
 import com.codeborne.selenide.WebDriverRunner
 import com.google.common.html.HtmlEscapers
 import com.thoughtworks.gauge.*
@@ -90,6 +91,7 @@ class Steps {
         Selenide.open(path)
     }
 
+    @BeforeSpec(tags = ["refreshBrowser"])
     @Step("Close session")
     fun closeSession() {
         Selenide.closeWebDriver()
@@ -107,9 +109,9 @@ class Steps {
         }
     }
 
-    @Step("Click <name> link")
-    fun clickLink(name: String) {
-        `$$`("a").find(exactText(name)).click()
+    @Step("Click <text> link")
+    fun clickLink(text: String) {
+        `$$`("a").find(exactText(text)).click()
     }
 
     @Step("File <name> has downloaded")
@@ -137,6 +139,16 @@ class Steps {
     @Step("Page content equals to <content>")
     fun pageContentEquals(content: String) {
         `$`("html").shouldHave(exactText(content))
+    }
+
+    @Step("Upload file <file> to <text>")
+    fun uploadFile(file: String, text: String) {
+        `$`(byText(text)).parent().find("input[type=\"file\"]").uploadFromClasspath(file)
+    }
+
+    @Step("Click <text> button")
+    fun clickButton(text: String) {
+        `$$`("button").find(exactText(text)).click()
     }
 
     private fun loadProperties(): Properties {
