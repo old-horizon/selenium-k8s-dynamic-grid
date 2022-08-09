@@ -30,7 +30,7 @@ public class KubernetesDriver {
     }
 
     public PodName createPod(PodSpec spec) {
-        var pod = client.pods().create(spec.build());
+        var pod = client.resource(spec.build()).create();
         return new PodName(pod.getMetadata().getName());
     }
 

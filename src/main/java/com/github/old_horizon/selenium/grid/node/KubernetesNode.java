@@ -5,7 +5,7 @@ import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.openqa.selenium.*;
 import org.openqa.selenium.concurrent.GuardedRunnable;
 import org.openqa.selenium.events.EventBus;
@@ -132,7 +132,7 @@ public class KubernetesNode extends Node {
         var tracer = loggingOptions.getTracer();
         var bus = eventOptions.getEventBus();
         var clientFactory = networkOptions.getHttpClientFactory(tracer);
-        var k8s = new KubernetesDriver(new DefaultKubernetesClient());
+        var k8s = new KubernetesDriver(new KubernetesClientBuilder().build());
         var factories = createFactories(k8sOptions, tracer, clientFactory, bus, k8s);
 
         LOG.info("Creating kubernetes node");
