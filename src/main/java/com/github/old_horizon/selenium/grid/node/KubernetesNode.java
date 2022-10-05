@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -84,7 +85,12 @@ public class KubernetesNode extends Node {
                 .ticker(Ticker.systemTicker())
                 .removalListener((RemovalListener<SessionId, SessionSlot>) notification -> {
                     LOG.log(Debug.getDebugLogLevel(), "Stopping session {0}", notification.getKey().toString());
-                    SessionSlot slot = notification.getValue();
+                    var slot = notification.getValue();
+                    var id = notification.getKey();
+                    if (notification.wasEvicted()) {
+                        LOG.log(Level.INFO, () -> String.format("Session id %s timed out, stopping...", id));
+                        slot.execute(new HttpRequest(DELETE, "/session/" + id));
+                    }
                     if (!slot.isAvailable()) {
                         slot.stop();
                     }
@@ -92,10 +98,10 @@ public class KubernetesNode extends Node {
                 .build();
 
         var sessionCleanupNodeService = Executors.newSingleThreadScheduledExecutor(r -> {
-           var thread = new Thread(r);
-           thread.setDaemon(true);
-           thread.setName("Kubernetes Node - Session Cleanup " + uri);
-           return thread;
+            var thread = new Thread(r);
+            thread.setDaemon(true);
+            thread.setName("Kubernetes Node - Session Cleanup " + uri);
+            return thread;
         });
         sessionCleanupNodeService.scheduleAtFixedRate(
                 GuardedRunnable.guard(currentSessions::cleanUp), 30, 30, TimeUnit.SECONDS);

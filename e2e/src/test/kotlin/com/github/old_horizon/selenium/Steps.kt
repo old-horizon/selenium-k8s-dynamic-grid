@@ -10,7 +10,7 @@ import com.codeborne.selenide.WebDriverRunner
 import com.google.common.html.HtmlEscapers
 import com.thoughtworks.gauge.*
 import com.thoughtworks.gauge.datastore.ScenarioDataStore
-import io.fabric8.kubernetes.client.DefaultKubernetesClient
+import io.fabric8.kubernetes.client.KubernetesClientBuilder
 import io.github.rybalkinsd.kohttp.dsl.httpHead
 import org.amshove.kluent.shouldBe
 import org.amshove.kluent.shouldBeEqualTo
@@ -165,9 +165,9 @@ class Steps {
         Configuration.baseUrl = "http://${getHostAddress()}:${website.port}"
     }
 
-    private fun getGridUrl(): String = DefaultKubernetesClient().use {
+    private fun getGridUrl(): String = KubernetesClientBuilder().build().use {
         val internalIp = it.nodes().list().items.first().status.addresses.first().address
-        val nodePort = it.inNamespace(System.getProperty("selenium.namespace")).services()
+        val nodePort = it.services().inNamespace(System.getProperty("selenium.namespace"))
                 .withName("selenium").get().spec.ports.first().nodePort
         return "http://$internalIp:$nodePort/wd/hub"
     }
