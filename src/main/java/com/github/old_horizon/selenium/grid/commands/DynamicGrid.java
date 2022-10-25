@@ -40,6 +40,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -117,9 +118,10 @@ public class DynamicGrid extends TemplateGridServerCommand {
         var queue = new LocalNewSessionQueue(
                 tracer,
                 distributorOptions.getSlotMatcher(),
-                newSessionRequestOptions.getSessionRequestRetryInterval(),
+                newSessionRequestOptions.getSessionRequestTimeoutPeriod(),
                 newSessionRequestOptions.getSessionRequestTimeout(),
-                registrationSecret);
+                registrationSecret,
+                newSessionRequestOptions.getBatchSize());
         combinedHandler.addHandler(queue);
 
         var distributor = new LocalDistributor(
@@ -132,7 +134,8 @@ public class DynamicGrid extends TemplateGridServerCommand {
                 registrationSecret,
                 distributorOptions.getHealthCheckInterval(),
                 distributorOptions.shouldRejectUnsupportedCaps(),
-                newSessionRequestOptions.getSessionRequestRetryInterval());
+                newSessionRequestOptions.getSessionRequestRetryInterval(),
+                distributorOptions.getNewSessionThreadPoolSize());
         combinedHandler.addHandler(distributor);
 
         var router = new Router(tracer, clientFactory, sessions, queue, distributor)
@@ -204,6 +207,11 @@ public class DynamicGrid extends TemplateGridServerCommand {
     @Override
     protected void execute(Config config) {
         Require.nonNull("Config", config);
+
+        config.get("server", "max-threads").ifPresent(value -> LOG.log(Level.WARNING,
+                () -> "Support for max-threads flag is deprecated. " +
+                        "The intent of the flag is to set the thread pool size in the Distributor. " +
+                        "Please use newsession-threadpool-size flag instead."));
 
         var server = asServer(config).start();
 

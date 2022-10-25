@@ -26,9 +26,10 @@ public class LocalDistributor extends org.openqa.selenium.grid.distributor.local
                             Secret registrationSecret,
                             Duration healthcheckInterval,
                             boolean rejectUnsupportedCaps,
-                            Duration sessionRequestRetryInterval) {
+                            Duration sessionRequestRetryInterval,
+                            int newSessionThreadPoolSize) {
         super(tracer, bus, clientFactory, sessions, sessionQueue, slotSelector, registrationSecret, healthcheckInterval,
-                rejectUnsupportedCaps, sessionRequestRetryInterval);
+                rejectUnsupportedCaps, sessionRequestRetryInterval, newSessionThreadPoolSize);
         try {
             var sessionCreatorExecutor = getClass().getSuperclass().getDeclaredField("sessionCreatorExecutor");
             sessionCreatorExecutor.setAccessible(true);
