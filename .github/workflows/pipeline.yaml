@@ -50,8 +50,6 @@ jobs:
         run: kubectl create ns selenium
       - name: setup helm
         uses: azure/setup-helm@v1
-        with:
-          version: 3.10.1
       - name: setup skaffold and deploy
         uses: hiberbee/github-action-skaffold@1.12.0
         with:
