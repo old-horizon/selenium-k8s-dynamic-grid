@@ -4,7 +4,7 @@ import com.github.old_horizon.selenium.k8s.KubernetesDriver;
 import com.google.common.base.Ticker;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import org.openqa.selenium.*;
 import org.openqa.selenium.concurrent.GuardedRunnable;
@@ -83,18 +83,7 @@ public class KubernetesNode extends Node {
         this.currentSessions = CacheBuilder.newBuilder()
                 .expireAfterAccess(sessionTimeout)
                 .ticker(Ticker.systemTicker())
-                .removalListener((RemovalListener<SessionId, SessionSlot>) notification -> {
-                    LOG.log(Debug.getDebugLogLevel(), "Stopping session {0}", notification.getKey().toString());
-                    var slot = notification.getValue();
-                    var id = notification.getKey();
-                    if (notification.wasEvicted()) {
-                        LOG.log(Level.INFO, () -> String.format("Session id %s timed out, stopping...", id));
-                        slot.execute(new HttpRequest(DELETE, "/session/" + id));
-                    }
-                    if (!slot.isAvailable()) {
-                        slot.stop();
-                    }
-                })
+                .removalListener(this::stopTimedOutSession)
                 .build();
 
         var sessionCleanupNodeService = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -125,6 +114,31 @@ public class KubernetesNode extends Node {
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::stopAllSessions));
         new JMXHelper().register(this);
+    }
+
+    private void stopTimedOutSession(RemovalNotification<SessionId, SessionSlot> notification) {
+        if (notification.getKey() != null && notification.getValue() != null) {
+            var slot = notification.getValue();
+            var id = notification.getKey();
+            if (notification.wasEvicted()) {
+                LOG.log(Level.INFO, () -> String.format("Session id %s timed out, stopping...", id));
+                try {
+                    slot.execute(new HttpRequest(DELETE, "/session/" + id));
+                } catch (Exception e) {
+                    LOG.log(Level.WARNING, String.format("Exception while trying to stop session %s", id), e);
+                }
+            }
+            slot.stop();
+            if (this.isDraining()) {
+                var done = pendingSessions.decrementAndGet();
+                if (done <= 0) {
+                    LOG.info("Node draining complete!");
+                    bus.fire(new NodeDrainComplete(this.getId()));
+                }
+            }
+        } else {
+            LOG.log(Debug.getDebugLogLevel(), "Received stop session notification with null values");
+        }
     }
 
     public static Node create(Config config) {

@@ -169,11 +169,11 @@ public class KubernetesSessionFactory implements SessionFactory {
     }
 
     Optional<TimeZone> getTimeZone(Capabilities desiredCapabilities) {
-        return Optional.ofNullable(desiredCapabilities.getCapability("se:timeZone"))
-                .flatMap(tz -> Arrays.stream(TimeZone.getAvailableIDs())
-                        .filter(tz::equals)
-                        .findFirst()
-                        .map(TimeZone::getTimeZone));
+        return Arrays.stream(TimeZone.getAvailableIDs()).filter(tz -> tz.equals(
+                        Optional.ofNullable(desiredCapabilities.getCapability("se:timeZone"))
+                                .orElseGet(() -> System.getenv("TZ"))))
+                .findFirst()
+                .map(TimeZone::getTimeZone);
     }
 
     Map<String, String> getEnvVars() {
