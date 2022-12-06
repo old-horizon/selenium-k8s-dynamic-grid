@@ -55,7 +55,7 @@ jobs:
       - name: setup skaffold and deploy
         uses: hiberbee/github-action-skaffold@1.12.0
         with:
-          skaffold-version: 1.39.4
+          skaffold-version: 2.0.3
           working-directory: kubernetes/skaffold
           command: run
           namespace: selenium

@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta29
+apiVersion: skaffold/v4beta1
 kind: Config
 metadata:
   name: selenium-dynamic-grid
@@ -15,8 +15,6 @@ deploy:
     releases:
       - name: selenium-dynamic-grid
         chartPath: ../helm
-        artifactOverrides:
-          grid:
-            image: oldhorizon/selenium/dynamic-grid
-        imageStrategy:
-          helm: {}
+        setValueTemplates:
+          grid.image.repository: '{{.IMAGE_REPO_oldhorizon_selenium_dynamic_grid}}'
+          grid.image.tag: '{{.IMAGE_TAG_oldhorizon_selenium_dynamic_grid}}'
