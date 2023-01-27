@@ -267,6 +267,11 @@ public class KubernetesNode extends Node {
     }
 
     @Override
+    public HttpResponse downloadFile(HttpRequest req, SessionId id) {
+        return executeWebDriverCommand(req);
+    }
+
+    @Override
     public HttpResponse uploadFile(HttpRequest req, SessionId id) {
         return executeWebDriverCommand(req);
     }

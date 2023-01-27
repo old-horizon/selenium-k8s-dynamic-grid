@@ -20,6 +20,7 @@ import org.openqa.selenium.grid.graphql.GraphqlHandler;
 import org.openqa.selenium.grid.log.LoggingOptions;
 import org.openqa.selenium.grid.node.ProxyNodeWebsockets;
 import org.openqa.selenium.grid.router.Router;
+import org.openqa.selenium.grid.router.httpd.RouterOptions;
 import org.openqa.selenium.grid.security.BasicAuthenticationFilter;
 import org.openqa.selenium.grid.security.SecretOptions;
 import org.openqa.selenium.grid.server.BaseServerOptions;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_UNAVAILABLE;
@@ -155,33 +157,42 @@ public class DynamicGrid extends TemplateGridServerCommand {
                 serverOptions.getExternalUri(),
                 getFormattedVersion());
 
-        var ui = new GridUiRoute();
+        var subPath = new RouterOptions(config).subPath();
+        var ui = new GridUiRoute(subPath);
 
         var node = (KubernetesNode) KubernetesNode.create(config);
-        combinedHandler.addHandler(node);
-        distributor.add(node);
 
-        Routable httpHandler = combine(
-                ui,
-                router,
-                Route.get("/readyz").to(() -> readinessCheck),
-                Route.prefix("/wd/hub").to(combine(router)),
-                Route.options("/graphql").to(() -> graphqlHandler),
-                Route.post("/graphql").to(() -> graphqlHandler),
-                Route.get("/downloads/{sessionId}/{fileName}")
-                        .to(params -> new GetFile(node.getKubernetesSession(sessionIdFrom(params)), fileNameFrom(params))),
-                Route.delete("/downloads/{sessionId}/{fileName}")
-                        .to(params -> new DeleteFile(node.getKubernetesSession(sessionIdFrom(params)), fileNameFrom(params))),
-                Route.get("/downloads/{sessionId}")
-                        .to(params -> new ListFiles(node.getKubernetesSession(sessionIdFrom(params)))),
-                Route.delete("/downloads/{sessionId}")
-                        .to(params -> new DeleteFiles(node.getKubernetesSession(sessionIdFrom(params)))));
+        var appendRoute = Stream.of(
+                        router,
+                        hubRoute(subPath, combine(router)),
+                        graphqlRoute(subPath, () -> graphqlHandler),
+                        Route.get("/downloads/{sessionId}/{fileName}")
+                                .to(params -> new GetFile(node.getKubernetesSession(sessionIdFrom(params)), fileNameFrom(params))),
+                        Route.delete("/downloads/{sessionId}/{fileName}")
+                                .to(params -> new DeleteFile(node.getKubernetesSession(sessionIdFrom(params)), fileNameFrom(params))),
+                        Route.get("/downloads/{sessionId}")
+                                .to(params -> new ListFiles(node.getKubernetesSession(sessionIdFrom(params)))),
+                        Route.delete("/downloads/{sessionId}")
+                                .to(params -> new DeleteFiles(node.getKubernetesSession(sessionIdFrom(params)))))
+                .reduce(Route::combine)
+                .get();
+
+        if (!subPath.isEmpty()) {
+            appendRoute = Route.combine(appendRoute, baseRoute(subPath, combine(router)));
+        }
+
+        Routable httpHandler = combine(ui, appendRoute);
 
         var uap = secretOptions.getServerAuthentication();
         if (uap != null) {
             LOG.info("Requiring authentication to connect");
             httpHandler = httpHandler.with(new BasicAuthenticationFilter(uap.username(), uap.password()));
         }
+
+        httpHandler = combine(httpHandler, Route.get("/readyz").to(() -> readinessCheck));
+
+        combinedHandler.addHandler(node);
+        distributor.add(node);
 
         bus.addListener(NodeDrainComplete.listener(nodeId -> {
             if (!node.getId().equals(nodeId)) {
