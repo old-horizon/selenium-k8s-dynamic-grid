@@ -18,7 +18,9 @@ Chrome DevTools Protocol (CDP) and WebDriver BiDirectional API are available.
 
 Pass RemoteWebDriver instance to `org.openqa.selenium.remote.Augmenter#augment` for activation.
 
-## File download support
+## File download support (deprecated)
+
+**NOTE: Since Selenium 4.8.2, you can use "Managed Downloads" feature instead of this.**
 
 This extension has ability to access files downloaded with browser.
 
@@ -30,8 +32,6 @@ Gets file list in "Downloads" directory as JSON format.
 Deletes all files in "Downloads" directory.
 * **GET /downloads/{sessionId}/{fileName}**  
 Gets content of specified file.
-* **DELETE /downloads/{sessionId}/{fileName}**  
-Deletes specified file.
 
 ## Special thanks
 
