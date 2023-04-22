@@ -11,12 +11,10 @@ import org.openqa.selenium.remote.SessionId;
 import org.openqa.selenium.remote.http.HttpClient;
 import org.openqa.selenium.remote.tracing.Tracer;
 
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 
 public class KubernetesSession extends ProtocolConvertingSession {
@@ -25,7 +23,6 @@ public class KubernetesSession extends ProtocolConvertingSession {
     private final KubernetesDriver k8s;
     private final PodName podName;
     private final WorkerPodSpec podSpec;
-    private final DownloadDirectory downloadDirectory;
 
     protected KubernetesSession(Tracer tracer, HttpClient client, SessionId id, URL url, Dialect downstream,
                                 Dialect upstream, Capabilities stereotype, Capabilities capabilities,
@@ -36,11 +33,6 @@ public class KubernetesSession extends ProtocolConvertingSession {
         this.k8s = k8s;
         this.podName = podName;
         this.podSpec = podSpec;
-        this.downloadDirectory = new DownloadDirectory(k8s, podName, podSpec);
-    }
-
-    public DownloadDirectory getDownloadDirectory() {
-        return downloadDirectory;
     }
 
     @Override
@@ -69,44 +61,5 @@ public class KubernetesSession extends ProtocolConvertingSession {
 
         k8s.copyFile(podName, spec.getWorkerContainerName(), spec.getVideosPath().resolve("video.mp4"),
                 videosPath.get().resolve(sessionId.toString() + ".mp4"));
-    }
-
-    public static class DownloadDirectory {
-
-        private final KubernetesDriver k8s;
-        private final PodName podName;
-        private final WorkerPodSpec podSpec;
-
-        public DownloadDirectory(KubernetesDriver k8s, PodName podName, WorkerPodSpec podSpec) {
-            this.k8s = k8s;
-            this.podName = podName;
-            this.podSpec = podSpec;
-        }
-
-        public InputStream getFile(String fileName) {
-            return k8s.getFile(podName, podSpec.getWorkerContainerName(), getDirectoryPath().resolve(fileName));
-        }
-
-        public void deleteFile(String fileName) {
-            k8s.executeCommand(podName, podSpec.getWorkerContainerName(),
-                    new String[]{"rm", getDirectoryPath().resolve(fileName).toAbsolutePath().toString()});
-        }
-
-        public List<String> listFiles() {
-            return List.of(k8s.executeCommand(podName, podSpec.getWorkerContainerName(), new String[]{
-                    "find", getDirectoryPath().toAbsolutePath().toString(), "-maxdepth", "1", "-type", "f",
-                    "-printf", "%f\n"}).split("\n"));
-        }
-
-        public void deleteFiles() {
-            k8s.executeCommand(podName, podSpec.getWorkerContainerName(),
-                    new String[]{"rm", "-rf", getDirectoryPath().toAbsolutePath().toString()});
-        }
-
-        private Path getDirectoryPath() {
-            var user = k8s.executeCommand(podName, podSpec.getWorkerContainerName(), new String[]{"id", "-u", "-n"})
-                    .trim();
-            return Path.of("home", user, "Downloads");
-        }
     }
 }

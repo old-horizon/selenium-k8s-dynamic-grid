@@ -28,6 +28,13 @@ data:
             proxy_pass http://localhost:4444;
         }
 
+        location ~ ^/session/.*/se/bidi {
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_pass http://localhost:4444;
+        }
+
         location ~ ^/session/.*/se/vnc {
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -43,6 +50,10 @@ data:
                 if res['value']['capabilities']['se:cdp'] then
                     local path, r, err = ngx.re.sub(res['value']['capabilities']['se:cdp'], "^ws:\\/\\/.[^\\/]+(.+)$", "$1")
                     res['value']['capabilities']['se:cdp'] = 'ws://' .. ngx.var.http_host .. path
+                end
+                if res['value']['capabilities']['se:bidi'] then
+                    local path, r, err = ngx.re.sub(res['value']['capabilities']['se:bidi'], "^ws:\\/\\/.[^\\/]+(.+)$", "$1")
+                    res['value']['capabilities']['se:bidi'] = 'ws://' .. ngx.var.http_host .. path
                 end
                 ngx.say(cjson.encode(res))
             }

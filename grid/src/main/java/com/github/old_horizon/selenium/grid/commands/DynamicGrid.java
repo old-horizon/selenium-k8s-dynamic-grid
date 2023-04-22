@@ -1,6 +1,5 @@
 package com.github.old_horizon.selenium.grid.commands;
 
-import com.github.old_horizon.selenium.grid.commands.downloads.DeleteFile;
 import com.github.old_horizon.selenium.grid.commands.downloads.DeleteFiles;
 import com.github.old_horizon.selenium.grid.commands.downloads.GetFile;
 import com.github.old_horizon.selenium.grid.commands.downloads.ListFiles;
@@ -167,13 +166,11 @@ public class DynamicGrid extends TemplateGridServerCommand {
                         hubRoute(subPath, combine(router)),
                         graphqlRoute(subPath, () -> graphqlHandler),
                         Route.get("/downloads/{sessionId}/{fileName}")
-                                .to(params -> new GetFile(node.getKubernetesSession(sessionIdFrom(params)), fileNameFrom(params))),
-                        Route.delete("/downloads/{sessionId}/{fileName}")
-                                .to(params -> new DeleteFile(node.getKubernetesSession(sessionIdFrom(params)), fileNameFrom(params))),
+                                .to(params -> new GetFile(node, sessionIdFrom(params), fileNameFrom(params))),
                         Route.get("/downloads/{sessionId}")
-                                .to(params -> new ListFiles(node.getKubernetesSession(sessionIdFrom(params)))),
+                                .to(params -> new ListFiles(node, sessionIdFrom(params))),
                         Route.delete("/downloads/{sessionId}")
-                                .to(params -> new DeleteFiles(node.getKubernetesSession(sessionIdFrom(params)))))
+                                .to(params -> new DeleteFiles(node, sessionIdFrom(params))))
                 .reduce(Route::combine)
                 .get();
 

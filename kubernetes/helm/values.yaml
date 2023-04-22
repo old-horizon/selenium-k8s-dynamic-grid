@@ -11,7 +11,9 @@ grid:
 worker:
   startupTimeout: 120
   image:
+    repository: oldhorizon/selenium/worker
     pullPolicy: IfNotPresent
+    tag: "latest"
   videoImage:
     repository: selenium/video
     pullPolicy: IfNotPresent

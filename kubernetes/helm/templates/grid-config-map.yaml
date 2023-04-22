@@ -6,9 +6,7 @@ data:
   config.toml: |
     [kubernetes]
     configs = [
-        "selenium/standalone-firefox", '{"browserName": "firefox"}',
-        "selenium/standalone-chrome", '{"browserName": "chrome"}',
-        "selenium/standalone-edge", '{"browserName": "MicrosoftEdge"}'
+        "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}", '{"browserName": "chrome", "se:downloadsEnabled": "true"}'
     ]
     video-image = "{{ .Values.worker.videoImage.repository }}:{{ .Values.worker.videoImage.tag }}"
     video-image-pull-policy = "{{ .Values.worker.videoImage.pullPolicy }}"

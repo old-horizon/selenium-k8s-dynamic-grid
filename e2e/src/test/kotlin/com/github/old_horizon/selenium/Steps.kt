@@ -35,7 +35,8 @@ import java.util.function.Supplier
 class Steps {
     private val props = loadProperties()
     private val website = Website(props.getProperty("website.port").toInt())
-    private val downloadDir = lazy { DownloadDirectory.of(WebDriverRunner.driver()) }
+
+    private lateinit var downloadDir: DownloadDirectory
 
     @BeforeSuite
     fun beforeSuite() {
@@ -80,10 +81,11 @@ class Steps {
 
     @BeforeScenario
     @AfterScenario
-    fun cleanDownloadDirectory() {
-        if (downloadDir.isInitialized()) {
-            downloadDir.value.deleteFiles()
-        }
+    fun cleanDownloadDirectory(context: ExecutionContext) {
+        Selenide.open()
+        downloadDir = DownloadDirectory.of(WebDriverRunner.driver(), context.allTags.contains(
+                "use-deprecated-endpoints"))
+        downloadDir.deleteFiles()
     }
 
     @Step("Navigate to <path>")
@@ -116,12 +118,13 @@ class Steps {
 
     @Step("File <name> has downloaded")
     fun hasDownloaded(name: String) {
-        downloadDir.value.exists(name) shouldBe true
+        TimeUnit.SECONDS.sleep(1)
+        downloadDir.exists(name) shouldBe true
     }
 
     @Step("Content of downloaded <actual> equals to <expected>")
     fun downloadedContentEquals(actual: String, expected: String) {
-        downloadDir.value.inputStream(actual).readAllBytes() shouldBeEqualTo read(expected).readAllBytes()
+        downloadDir.inputStream(actual).readAllBytes() shouldBeEqualTo read(expected).readAllBytes()
     }
 
     @Step("When accessing <url> then <content> will be returned")

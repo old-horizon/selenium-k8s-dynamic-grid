@@ -15,7 +15,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-build-${{ hashFiles('pom.xml') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('pom.xml', 'grid/pom.xml', 'worker/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-build-
       - name: build
@@ -25,7 +25,8 @@ jobs:
         with:
           name: artifacts
           path: |
-            target/*.jar
+            grid/target/*.jar
+            worker/target/*.jar
           retention-days: 1
   e2e:
     runs-on: ubuntu-latest
@@ -55,7 +56,7 @@ jobs:
       - name: setup skaffold and deploy
         uses: hiberbee/github-action-skaffold@1.12.0
         with:
-          skaffold-version: 2.1.0
+          skaffold-version: 2.3.1
           working-directory: kubernetes/skaffold
           command: run
           namespace: selenium
@@ -87,4 +88,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            *.jar
+            grid/target/*.jar
+            worker/target/*.jar

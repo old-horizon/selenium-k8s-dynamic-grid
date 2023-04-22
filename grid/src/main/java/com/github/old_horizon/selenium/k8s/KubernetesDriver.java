@@ -60,11 +60,6 @@ public class KubernetesDriver {
         }
     }
 
-    public InputStream getFile(PodName podName, ContainerName containerName, Path path) {
-        return client.pods().withName(podName.getValue()).inContainer(containerName.getValue()).file(path.toString())
-                .read();
-    }
-
     public void copyFile(PodName podName, ContainerName containerName, Path source, Path destination) {
         client.pods().withName(podName.getValue()).inContainer(containerName.getValue()).file(source.toString())
                 .copy(destination);

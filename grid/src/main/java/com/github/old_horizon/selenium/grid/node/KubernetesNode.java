@@ -19,6 +19,7 @@ import org.openqa.selenium.grid.log.LoggingOptions;
 import org.openqa.selenium.grid.node.ActiveSession;
 import org.openqa.selenium.grid.node.HealthCheck;
 import org.openqa.selenium.grid.node.Node;
+import org.openqa.selenium.grid.node.config.NodeOptions;
 import org.openqa.selenium.grid.node.local.SessionSlot;
 import org.openqa.selenium.grid.security.Secret;
 import org.openqa.selenium.grid.security.SecretOptions;
@@ -43,6 +44,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -67,18 +69,22 @@ public class KubernetesNode extends Node {
     private final URI uri;
     private final List<SessionSlot> factories;
     private final int maxSessionCount;
+    private final boolean cdpEnabled;
+    private final boolean bidiEnabled;
     private final Duration heartbeatPeriod;
     private final Cache<SessionId, SessionSlot> currentSessions;
     private final AtomicInteger pendingSessions = new AtomicInteger();
 
     public KubernetesNode(Tracer tracer, EventBus bus, Secret registrationSecret, NodeId nodeId,
-                          URI uri, List<SessionSlot> factories, int maxSessionCount, Duration sessionTimeout,
-                          Duration heartbeatPeriod) {
+                          URI uri, List<SessionSlot> factories, int maxSessionCount, boolean cdpEnabled,
+                          boolean bidiEnabled, Duration sessionTimeout, Duration heartbeatPeriod) {
         super(tracer, nodeId, uri, registrationSecret);
         this.bus = bus;
         this.uri = uri;
         this.factories = factories;
         this.maxSessionCount = maxSessionCount;
+        this.cdpEnabled = cdpEnabled;
+        this.bidiEnabled = bidiEnabled;
         this.heartbeatPeriod = heartbeatPeriod;
         this.currentSessions = CacheBuilder.newBuilder()
                 .expireAfterAccess(sessionTimeout)
@@ -145,6 +151,7 @@ public class KubernetesNode extends Node {
         var loggingOptions = new LoggingOptions(config);
         var eventOptions = new EventBusOptions(config);
         var serverOptions = new BaseServerOptions(config);
+        var nodeOptions = new NodeOptions(config);
         var secretOptions = new SecretOptions(config);
         var networkOptions = new NetworkOptions(config);
         var k8sOptions = new KubernetesOptions(config);
@@ -158,8 +165,8 @@ public class KubernetesNode extends Node {
         LOG.info("Creating kubernetes node");
 
         return new KubernetesNode(tracer, bus, secretOptions.getRegistrationSecret(), new NodeId(UUID.randomUUID()),
-                serverOptions.getExternalUri(), factories, k8sOptions.getMaxSessions(), k8sOptions.getSessionTimeout(),
-                k8sOptions.getHeartbeatPeriod());
+                serverOptions.getExternalUri(), factories, k8sOptions.getMaxSessions(), nodeOptions.isCdpEnabled(),
+                nodeOptions.isBiDiEnabled(), k8sOptions.getSessionTimeout(), k8sOptions.getHeartbeatPeriod());
     }
 
     static List<SessionSlot> createFactories(KubernetesOptions k8sOptions, Tracer tracer,
@@ -184,9 +191,11 @@ public class KubernetesNode extends Node {
     @Override
     public Either<WebDriverException, CreateSessionResponse> newSession(CreateSessionRequest sessionRequest) {
         try (var span = tracer.getCurrentContext().createSpan("kubernetes_node.new_session")) {
+            var desiredCapabilities = sessionRequest.getDesiredCapabilities();
+
             Map<String, EventAttributeValue> attributeMap = new HashMap<>();
             attributeMap.put(LOGGER_CLASS.getKey(), setValue(getClass().getName()));
-            attributeMap.put("session.request.capabilities", setValue(sessionRequest.getDesiredCapabilities().toString()));
+            attributeMap.put("session.request.capabilities", setValue(desiredCapabilities.toString()));
             attributeMap.put("session.request.downstreamdialect", setValue(sessionRequest.getDownstreamDialects()
                     .toString()));
 
@@ -205,7 +214,7 @@ public class KubernetesNode extends Node {
             SessionSlot slotToUse = null;
             synchronized (factories) {
                 for (var factory : factories) {
-                    if (!factory.isAvailable() || !factory.test(sessionRequest.getDesiredCapabilities())) {
+                    if (!factory.isAvailable() || !factory.test(desiredCapabilities)) {
                         continue;
                     }
                     factory.reserve();
@@ -234,8 +243,8 @@ public class KubernetesNode extends Node {
                 span.setAttribute(UPSTREAM_DIALECT.getKey(), session.getUpstreamDialect().toString());
                 span.setAttribute(SESSION_URI.getKey(), session.getUri().toString());
 
-                var isSupportingCdp = slotToUse.isSupportingCdp() || caps.getCapability("se:cdp") != null;
-                var externalSession = createExternalSession(session, uri, isSupportingCdp);
+                var externalSession = createExternalSession(session, uri, slotToUse.isSupportingCdp(),
+                        slotToUse.isSupportingBiDi(), desiredCapabilities);
                 return Either.right(new CreateSessionResponse(externalSession,
                         getEncoder(session.getDownstreamDialect()).apply(externalSession)));
             } else {
@@ -263,7 +272,8 @@ public class KubernetesNode extends Node {
     @Override
     public Session getSession(SessionId id) throws NoSuchSessionException {
         var slot = getSessionSlot(id);
-        return createExternalSession(slot.getSession(), uri, slot.isSupportingCdp());
+        return createExternalSession(slot.getSession(), uri, slot.isSupportingCdp(), slot.isSupportingBiDi(),
+                slot.getSession().getCapabilities());
     }
 
     @Override
@@ -328,8 +338,8 @@ public class KubernetesNode extends Node {
         return Math.toIntExact(currentSessions.size());
     }
 
-    public KubernetesSession getKubernetesSession(SessionId id) {
-        return (KubernetesSession) getSessionSlot(id).getSession();
+    HttpResponse executeWorkerRequest(SessionId id, HttpRequest req) {
+        return getSessionSlot(id).getSession().execute(req);
     }
 
     private void stopAllSessions() {
@@ -339,21 +349,40 @@ public class KubernetesNode extends Node {
         }
     }
 
-    private Session createExternalSession(ActiveSession other, URI externalUri, boolean isSupportingCdp) {
-        Capabilities toUse = ImmutableCapabilities.copyOf(other.getCapabilities());
+    private Session createExternalSession(ActiveSession other, URI externalUri, boolean isSupportingCdp,
+                                          boolean isSupportingBiDi, Capabilities requestCapabilities) {
+        Capabilities toUse = ImmutableCapabilities.copyOf(requestCapabilities.merge(other.getCapabilities()));
 
-        if (isSupportingCdp) {
+        if ((isSupportingCdp || toUse.getCapability("se:cdp") != null) && cdpEnabled) {
             var cdpPath = String.format("/session/%s/se/cdp", other.getId());
             toUse = new PersistentCapabilities(toUse).setCapability("se:cdp", rewrite(cdpPath));
+        } else {
+            toUse = new PersistentCapabilities(excludePrefixOf(toUse, "se:cdp"))
+                    .setCapability("se:cdpEnabled", false);
         }
 
-        boolean isVncEnabled = toUse.getCapability("se:vncLocalAddress") != null;
+        if ((isSupportingBiDi || toUse.getCapability("se:bidi") != null) && bidiEnabled) {
+            var bidiPath = String.format("/session/%s/se/bidi", other.getId());
+            toUse = new PersistentCapabilities(toUse).setCapability("se:bidi", rewrite(bidiPath));
+        } else {
+            toUse = new PersistentCapabilities(excludePrefixOf(toUse, "se:bidi"))
+                    .setCapability("se:bidiEnabled", false);
+        }
+
+        var isVncEnabled = toUse.getCapability("se:vncLocalAddress") != null;
         if (isVncEnabled) {
             var vncPath = String.format("/session/%s/se/vnc", other.getId());
             toUse = new PersistentCapabilities(toUse).setCapability("se:vnc", rewrite(vncPath));
         }
 
         return new Session(other.getId(), externalUri, other.getStereotype(), toUse, Instant.now());
+    }
+
+    private Capabilities excludePrefixOf(Capabilities capabilities, String prefix) {
+        var excluded = new MutableCapabilities();
+        capabilities.asMap().entrySet().stream().filter(e -> !e.getKey().startsWith(prefix))
+                .forEach(e -> excluded.setCapability(e.getKey(), e.getValue()));
+        return excluded;
     }
 
     private URI rewrite(String path) {

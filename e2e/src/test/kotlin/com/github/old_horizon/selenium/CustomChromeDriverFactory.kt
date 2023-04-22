@@ -14,5 +14,6 @@ class CustomChromeDriverFactory : ChromeDriverFactory() {
                         setCapability("se:recordVideo", true)
                         setCapability("se:timeZone", "Asia/Tokyo")
                         setCapability("se:screenResolution", "1920x1080")
+                        setCapability("se:downloadsEnabled", true)
                     }
 }

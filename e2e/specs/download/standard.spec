@@ -1,4 +1,4 @@
-# File download
+# File download (Selenium standard)
 
 * Navigate to "/download.html"
 
