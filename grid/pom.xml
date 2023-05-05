@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.github.old_horizon.selenium</groupId>
         <artifactId>selenium-k8s-dynamic-grid</artifactId>
-        <version>1.1.0</version>
+        <version>1.1.1</version>
     </parent>
 
     <artifactId>grid</artifactId>
