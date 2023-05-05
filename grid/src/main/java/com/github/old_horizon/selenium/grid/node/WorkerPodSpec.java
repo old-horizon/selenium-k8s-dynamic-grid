@@ -177,6 +177,7 @@ abstract class WorkerPodSpec implements PodSpec {
         private static final ContainerName VIDEO_CONTAINER_NAME = new ContainerName("video");
         private static final Path VIDEOS_PATH = Path.of("/videos");
         private static final String VIDEOS_VOLUME_NAME = "videos";
+        private static final int VIDEO_PORT = 9000;
 
         private final DockerImage videoImage;
         private final ImagePullPolicy videoImagePullPolicy;
@@ -188,6 +189,10 @@ abstract class WorkerPodSpec implements PodSpec {
             super(workerImage, workerImagePullPolicy, resourceRequests, screenResolution, timeZone, envVars, owner);
             this.videoImage = videoImage;
             this.videoImagePullPolicy = videoImagePullPolicy;
+        }
+
+        int getVideoPort() {
+            return VIDEO_PORT;
         }
 
         ContainerName getVideoContainerName() {

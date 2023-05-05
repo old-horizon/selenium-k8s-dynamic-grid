@@ -50,6 +50,7 @@ public class KubernetesSessionFactory implements SessionFactory {
     private final DockerImage workerImage;
     private final Capabilities stereoType;
     private final DockerImage videoImage;
+    private final Duration videoStartupTimeout;
     private final ImagePullPolicy videoImagePullPolicy;
     private final Optional<Path> videosPath;
     private final SlotMatcher slotMatcher;
@@ -57,8 +58,8 @@ public class KubernetesSessionFactory implements SessionFactory {
     public KubernetesSessionFactory(Tracer tracer, HttpClient.Factory clientFactory, KubernetesDriver k8s,
                                     Duration workerStartupTimeout, ResourceRequests resourceRequests,
                                     DockerImage workerImage, ImagePullPolicy workerImagePullPolicy,
-                                    Capabilities stereoType, DockerImage videoImage, ImagePullPolicy videoImagePullPolicy,
-                                    Optional<Path> videosPath) {
+                                    Capabilities stereoType, DockerImage videoImage, Duration videoStartupTimeout,
+                                    ImagePullPolicy videoImagePullPolicy, Optional<Path> videosPath) {
         this.tracer = tracer;
         this.clientFactory = clientFactory;
         this.k8s = k8s;
@@ -68,6 +69,7 @@ public class KubernetesSessionFactory implements SessionFactory {
         this.workerImagePullPolicy = workerImagePullPolicy;
         this.stereoType = stereoType;
         this.videoImage = videoImage;
+        this.videoStartupTimeout = videoStartupTimeout;
         this.videoImagePullPolicy = videoImagePullPolicy;
         this.videosPath = videosPath;
         this.slotMatcher = new DefaultSlotMatcher();
@@ -88,20 +90,26 @@ public class KubernetesSessionFactory implements SessionFactory {
                 var podIp = k8s.getPodIp(podName);
                 var workerPort = podSpec.getWorkerPort();
 
-                LOG.info(String.format("Waiting for server to start (pod: %s)", podName));
+                LOG.info(String.format("Waiting for worker to start (pod: %s)", podName));
 
                 HttpClient client;
                 URL remoteAddress;
                 try {
-                    remoteAddress = getRemoteAddress(podIp, workerPort);
+                    remoteAddress = toUrl(String.format("http://%s:%d/wd/hub", podIp, workerPort));
                     client = clientFactory.createClient(remoteAddress);
                     waitForServerToStart(client, workerStartupTimeout);
+
+                    if (podSpec instanceof WorkerPodSpec.VideoRecording) {
+                        try (var videoClient = clientFactory.createClient(toUrl(String.format("http://%s:%d",
+                                podIp, ((WorkerPodSpec.VideoRecording) podSpec).getVideoPort())))) {
+                            waitForServerToStart(videoClient, videoStartupTimeout);
+                        }
+                    }
                 } catch (Exception e) {
                     k8s.deletePod(podName);
-                    return webDriverException(e, RetrySessionRequestException::new,
-                            "Unable to connect to kubernetes server.");
+                    return webDriverException(e, RetrySessionRequestException::new, "Unable to connect to worker.");
                 }
-                LOG.info(String.format("Server is ready (pod: %s)", podName));
+                LOG.info(String.format("Worker is ready (pod: %s)", podName));
 
                 var command = new Command(null, DriverCommand.NEW_SESSION(desiredCapabilities));
                 ProtocolHandshake.Result result;
@@ -194,9 +202,9 @@ public class KubernetesSessionFactory implements SessionFactory {
         return k8s.getOwnerReference(myName);
     }
 
-    URL getRemoteAddress(Ip ip, int port) {
+    URL toUrl(String url) {
         try {
-            return new URL(String.format("http://%s:%d/wd/hub", ip, port));
+            return new URL(url);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

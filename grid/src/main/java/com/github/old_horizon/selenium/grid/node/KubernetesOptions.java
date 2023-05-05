@@ -41,6 +41,10 @@ public class KubernetesOptions {
         return new DockerImage(get("video-image").orElse(DEFAULT_VIDEO_IMAGE));
     }
 
+    public Duration getVideoStartupTimeout() {
+        return getInt("video-startup-timeout").map(Duration::ofSeconds).orElseGet(() -> Duration.ofMinutes(1));
+    }
+
     public ImagePullPolicy getVideoImagePullPolicy() {
         try {
             return get("video-image-pull-policy").map(ImagePullPolicy::valueOf).orElse(ImagePullPolicy.Always);
