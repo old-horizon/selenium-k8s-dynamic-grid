@@ -5,7 +5,7 @@ import com.github.old_horizon.selenium.k8s.PodName;
 import dev.failsafe.Failsafe;
 import dev.failsafe.RetryPolicy;
 import org.openqa.selenium.Capabilities;
-import org.openqa.selenium.grid.node.ProtocolConvertingSession;
+import org.openqa.selenium.grid.node.DefaultActiveSession;
 import org.openqa.selenium.remote.Dialect;
 import org.openqa.selenium.remote.SessionId;
 import org.openqa.selenium.remote.http.HttpClient;
@@ -17,7 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-public class KubernetesSession extends ProtocolConvertingSession {
+public class KubernetesSession extends DefaultActiveSession {
 
     private final Optional<Path> videosPath;
     private final KubernetesDriver k8s;

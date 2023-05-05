@@ -177,7 +177,8 @@ public class KubernetesSessionFactory implements SessionFactory {
     }
 
     Map<String, String> getEnvVars() {
-        return System.getenv().entrySet().stream().filter(e -> e.getKey().startsWith("SE_"))
+        return System.getenv().entrySet().stream().filter(
+                        e -> e.getKey().startsWith("SE_") || e.getKey().equalsIgnoreCase("LANGUAGE"))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
