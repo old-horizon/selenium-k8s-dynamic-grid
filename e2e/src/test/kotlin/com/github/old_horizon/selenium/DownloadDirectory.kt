@@ -1,5 +1,6 @@
 package com.github.old_horizon.selenium
 
+import com.codeborne.selenide.BrowserDownloadsFolder
 import com.codeborne.selenide.Driver
 import io.github.rybalkinsd.kohttp.dsl.httpDelete
 import io.github.rybalkinsd.kohttp.dsl.httpPost
@@ -29,7 +30,7 @@ interface DownloadDirectory {
                                 return RemoteDownloadDirectory(URL(it), driver.sessionId)
                             }
                         }
-                        ?: LocalDownloadDirectory(driver.browserDownloadsFolder()!!.toFile())
+                        ?: LocalDownloadDirectory((driver.browserDownloadsFolder() as BrowserDownloadsFolder).folder)
     }
 }
 

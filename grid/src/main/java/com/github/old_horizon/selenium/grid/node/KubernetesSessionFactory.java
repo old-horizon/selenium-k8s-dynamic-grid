@@ -141,6 +141,11 @@ public class KubernetesSessionFactory implements SessionFactory {
     }
 
     @Override
+    public Capabilities getStereotype() {
+        return stereoType;
+    }
+
+    @Override
     public boolean test(Capabilities capabilities) {
         return slotMatcher.matches(stereoType, capabilities);
     }
