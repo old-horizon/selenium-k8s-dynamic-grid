@@ -101,10 +101,10 @@ class RemoteDownloadDirectory(private val remoteUrl: URL, private val sessionId:
 
 class RemoteDeprecatedDownloadDirectory(
         private val remoteUrl: URL, private val sessionId: SessionId) : DownloadDirectory {
-    override fun listFiles(): List<String> = buildUrl("/").httpGet().toType<FilesJson>()!!.files.map { it.name }
+    override fun listFiles(): List<String> = buildUrl("").httpGet().toType<FilesJson>()!!.files.map { it.name }
 
     override fun deleteFiles() {
-        URL(buildUrl("/")).let {
+        URL(buildUrl("")).let {
             httpDelete {
                 host = it.host
                 port = it.port

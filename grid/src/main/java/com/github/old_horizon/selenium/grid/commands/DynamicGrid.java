@@ -136,7 +136,8 @@ public class DynamicGrid extends TemplateGridServerCommand {
                 distributorOptions.getHealthCheckInterval(),
                 distributorOptions.shouldRejectUnsupportedCaps(),
                 newSessionRequestOptions.getSessionRequestRetryInterval(),
-                distributorOptions.getNewSessionThreadPoolSize());
+                distributorOptions.getNewSessionThreadPoolSize(),
+                distributorOptions.getSlotMatcher());
         combinedHandler.addHandler(distributor);
 
         var router = new Router(tracer, clientFactory, sessions, queue, distributor)

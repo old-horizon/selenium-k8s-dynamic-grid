@@ -47,7 +47,7 @@ abstract class WorkerPodSpec implements PodSpec {
         return WORKER_CONTAINER_NAME;
     }
 
-    void addSharedMemoryVolume(PodFluent.SpecNested<PodBuilder> spec) {
+    void addSharedMemoryVolume(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec) {
         // @formatter:off
         spec.addNewVolume()
                 .withName(DSHM_VOLUME_NAME)
@@ -58,7 +58,8 @@ abstract class WorkerPodSpec implements PodSpec {
         // @formatter:on
     }
 
-    void applyResourceRequests(PodSpecFluent.ContainersNested<PodFluent.SpecNested<PodBuilder>> spec) {
+    void applyResourceRequests(PodSpecFluent<PodFluent<PodBuilder>.SpecNested<PodBuilder>>
+                                       .ContainersNested<PodFluent<PodBuilder>.SpecNested<PodBuilder>> spec) {
         var requests = new HashMap<String, Quantity>();
         var limits = new HashMap<String, Quantity>();
 
@@ -79,7 +80,8 @@ abstract class WorkerPodSpec implements PodSpec {
         spec.withResources(requirements);
     }
 
-    void setWorkerScreenResolution(PodSpecFluent.ContainersNested<PodFluent.SpecNested<PodBuilder>> spec) {
+    void setWorkerScreenResolution(PodSpecFluent<PodFluent<PodBuilder>.SpecNested<PodBuilder>>
+                                           .ContainersNested<PodFluent<PodBuilder>.SpecNested<PodBuilder>> spec) {
         if (screenResolution.isPresent()) {
             var sr = screenResolution.get();
             // @formatter:off
@@ -95,7 +97,8 @@ abstract class WorkerPodSpec implements PodSpec {
         }
     }
 
-    void setTimeZone(PodSpecFluent.ContainersNested<PodFluent.SpecNested<PodBuilder>> spec) {
+    void setTimeZone(PodSpecFluent<PodFluent<PodBuilder>.SpecNested<PodBuilder>>
+                             .ContainersNested<PodFluent<PodBuilder>.SpecNested<PodBuilder>> spec) {
         if (timeZone.isPresent()) {
             var tz = timeZone.get();
             // @formatter:off
@@ -107,7 +110,8 @@ abstract class WorkerPodSpec implements PodSpec {
         }
     }
 
-    void setEnvVars(PodSpecFluent.ContainersNested<PodFluent.SpecNested<PodBuilder>> spec) {
+    void setEnvVars(PodSpecFluent<PodFluent<PodBuilder>.SpecNested<PodBuilder>>
+                            .ContainersNested<PodFluent<PodBuilder>.SpecNested<PodBuilder>> spec) {
         envVars.forEach((k, v) -> {
             // @formatter:off
             spec.addNewEnv()
@@ -118,12 +122,12 @@ abstract class WorkerPodSpec implements PodSpec {
         });
     }
 
-    abstract void customize(PodFluent.SpecNested<PodBuilder> spec);
+    abstract void customize(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec);
 
     @Override
     public Pod build() {
         // @formatter:off
-        var spec= new PodBuilder()
+        var spec = new PodBuilder()
                 .withNewMetadata()
                     .withGenerateName("worker-")
                     .withOwnerReferences(owner)
@@ -144,12 +148,12 @@ abstract class WorkerPodSpec implements PodSpec {
         }
 
         @Override
-        void customize(PodFluent.SpecNested<PodBuilder> spec) {
+        void customize(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec) {
             addSharedMemoryVolume(spec);
             addWorkerContainer(spec);
         }
 
-        void addWorkerContainer(PodFluent.SpecNested<PodBuilder> spec) {
+        void addWorkerContainer(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec) {
             // @formatter:off
             var containerSpec = spec.addNewContainer()
                                     .withName(WORKER_CONTAINER_NAME.getValue())
@@ -204,14 +208,14 @@ abstract class WorkerPodSpec implements PodSpec {
         }
 
         @Override
-        void customize(PodFluent.SpecNested<PodBuilder> spec) {
+        void customize(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec) {
             addSharedMemoryVolume(spec);
             addVideosVolume(spec);
             addWorkerContainer(spec);
             addVideoContainer(spec);
         }
 
-        void addWorkerContainer(PodFluent.SpecNested<PodBuilder> spec) {
+        void addWorkerContainer(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec) {
             // @formatter:off
             var containerSpec = spec.addNewContainer()
                                     .withName(WORKER_CONTAINER_NAME.getValue())
@@ -237,7 +241,7 @@ abstract class WorkerPodSpec implements PodSpec {
             containerSpec.endContainer();
         }
 
-        void addVideosVolume(PodFluent.SpecNested<PodBuilder> spec) {
+        void addVideosVolume(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec) {
             // @formatter:off
             spec.addNewVolume()
                     .withName(VIDEOS_VOLUME_NAME)
@@ -247,7 +251,7 @@ abstract class WorkerPodSpec implements PodSpec {
             // @formatter:on
         }
 
-        void addVideoContainer(PodFluent.SpecNested<PodBuilder> spec) {
+        void addVideoContainer(PodFluent<PodBuilder>.SpecNested<PodBuilder> spec) {
             // @formatter:off
             var containerSpec = spec.addNewContainer()
                                     .withName(VIDEO_CONTAINER_NAME.getValue())

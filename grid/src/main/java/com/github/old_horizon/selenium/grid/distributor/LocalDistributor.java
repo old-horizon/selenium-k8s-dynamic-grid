@@ -1,6 +1,7 @@
 package com.github.old_horizon.selenium.grid.distributor;
 
 import org.openqa.selenium.events.EventBus;
+import org.openqa.selenium.grid.data.SlotMatcher;
 import org.openqa.selenium.grid.distributor.selector.SlotSelector;
 import org.openqa.selenium.grid.jmx.ManagedService;
 import org.openqa.selenium.grid.security.Secret;
@@ -27,9 +28,10 @@ public class LocalDistributor extends org.openqa.selenium.grid.distributor.local
                             Duration healthcheckInterval,
                             boolean rejectUnsupportedCaps,
                             Duration sessionRequestRetryInterval,
-                            int newSessionThreadPoolSize) {
+                            int newSessionThreadPoolSize,
+                            SlotMatcher slotMatcher) {
         super(tracer, bus, clientFactory, sessions, sessionQueue, slotSelector, registrationSecret, healthcheckInterval,
-                rejectUnsupportedCaps, sessionRequestRetryInterval, newSessionThreadPoolSize);
+                rejectUnsupportedCaps, sessionRequestRetryInterval, newSessionThreadPoolSize, slotMatcher);
         try {
             var sessionCreatorExecutor = getClass().getSuperclass().getDeclaredField("sessionCreatorExecutor");
             sessionCreatorExecutor.setAccessible(true);

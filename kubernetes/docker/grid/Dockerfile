@@ -5,7 +5,7 @@ WORKDIR /src/grid
 RUN --mount=type=cache,target=/root/.m2 mvn clean package -B
 
 FROM eclipse-temurin:11-jre
-ADD https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.10.0/selenium-server-4.10.0.jar /opt/selenium/selenium-server.jar
+ADD https://github.com/SeleniumHQ/selenium/releases/download/selenium-4.11.0/selenium-server-4.11.0.jar /opt/selenium/selenium-server.jar
 COPY --from=builder /src/grid/target/*.jar /opt/selenium/k8s-dynamic-grid.jar
 COPY --from=builder /src/kubernetes/docker/grid/start-selenium-dynamic-grid.sh /opt/bin/
 EXPOSE 4444
