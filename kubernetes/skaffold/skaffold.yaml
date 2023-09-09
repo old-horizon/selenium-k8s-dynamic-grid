@@ -7,11 +7,7 @@ build:
     - image: oldhorizon/selenium/dynamic-grid
       context: ../..
       docker:
-        dockerfile: ../docker/grid/Dockerfile
-    - image: oldhorizon/selenium/worker
-      context: ../..
-      docker:
-        dockerfile: ../docker/worker/Dockerfile
+        dockerfile: ../docker/Dockerfile
   local:
     useBuildkit: true
 deploy:
@@ -22,5 +18,3 @@ deploy:
         setValueTemplates:
           grid.image.repository: '{{.IMAGE_REPO_oldhorizon_selenium_dynamic_grid}}'
           grid.image.tag: '{{.IMAGE_TAG_oldhorizon_selenium_dynamic_grid}}'
-          worker.image.repository: '{{.IMAGE_REPO_oldhorizon_selenium_worker}}'
-          worker.image.tag: '{{.IMAGE_TAG_oldhorizon_selenium_worker}}'

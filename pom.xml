@@ -5,13 +5,8 @@
 
     <groupId>com.github.old_horizon.selenium</groupId>
     <artifactId>selenium-k8s-dynamic-grid</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <version>1.1.2</version>
-
-    <modules>
-        <module>grid</module>
-        <module>worker</module>
-    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,8 +37,18 @@
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-grid</artifactId>
-            <version>4.11.0</version>
+            <version>4.12.1</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
+            <version>6.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-model</artifactId>
+            <version>6.8.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.service</groupId>
@@ -96,6 +101,24 @@
                         <phase>none</phase>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
             </plugin>
         </plugins>
     </build>
