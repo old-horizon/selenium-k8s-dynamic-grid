@@ -15,8 +15,7 @@ import org.openqa.selenium.net.HostIdentifier;
 import org.openqa.selenium.remote.*;
 import org.openqa.selenium.remote.http.HttpClient;
 import org.openqa.selenium.remote.http.HttpRequest;
-import org.openqa.selenium.remote.tracing.EventAttribute;
-import org.openqa.selenium.remote.tracing.EventAttributeValue;
+import org.openqa.selenium.remote.tracing.AttributeMap;
 import org.openqa.selenium.remote.tracing.Span;
 import org.openqa.selenium.remote.tracing.Tracer;
 
@@ -27,7 +26,10 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -35,7 +37,6 @@ import static org.openqa.selenium.remote.Dialect.W3C;
 import static org.openqa.selenium.remote.http.Contents.string;
 import static org.openqa.selenium.remote.http.HttpMethod.GET;
 import static org.openqa.selenium.remote.tracing.AttributeKey.*;
-import static org.openqa.selenium.remote.tracing.EventAttribute.setValue;
 
 public class KubernetesSessionFactory implements SessionFactory {
 
@@ -80,10 +81,10 @@ public class KubernetesSessionFactory implements SessionFactory {
         var desiredCapabilities = sessionRequest.getDesiredCapabilities();
         LOG.info("Starting session for " + desiredCapabilities);
         return new SessionFactoryDelegate(tracer.getCurrentContext()
-                .createSpan("kubernetes_session_factory.apply"), new HashMap<>(), LOG) {
+                .createSpan("kubernetes_session_factory.apply"), tracer.createAttributeMap(), LOG) {
             @Override
-            Either<WebDriverException, ActiveSession> create(Span span, Map<String, EventAttributeValue> attributeMap) {
-                attributeMap.put(LOGGER_CLASS.getKey(), setValue(this.getClass().getName()));
+            Either<WebDriverException, ActiveSession> create(Span span, AttributeMap attributeMap) {
+                attributeMap.put(LOGGER_CLASS.getKey(), this.getClass().getName());
                 LOG.info("Creating worker pod...");
                 WorkerPodSpec podSpec = getWorkerPodSpec(desiredCapabilities);
                 var podName = k8s.createPod(podSpec);
@@ -129,8 +130,8 @@ public class KubernetesSessionFactory implements SessionFactory {
                 mergedCapabilities = addForwardCdpEndpoint(mergedCapabilities, podIp, workerPort, id.toString());
                 var dialect = result.getDialect();
                 var downstream = sessionRequest.getDownstreamDialects().contains(dialect) ? dialect : W3C;
-                attributeMap.put(DOWNSTREAM_DIALECT.getKey(), EventAttribute.setValue(downstream.toString()));
-                attributeMap.put(DRIVER_RESPONSE.getKey(), EventAttribute.setValue(response.toString()));
+                attributeMap.put(DOWNSTREAM_DIALECT.getKey(), downstream.toString());
+                attributeMap.put(DRIVER_RESPONSE.getKey(), response.toString());
 
                 span.addEvent("Kubernetes driver service created session", attributeMap);
                 LOG.fine(String.format("Created session: %s - %s (pod: %s)", id, capabilities, podName));

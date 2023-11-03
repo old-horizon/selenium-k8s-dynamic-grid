@@ -32,7 +32,7 @@ import org.openqa.selenium.remote.SessionId;
 import org.openqa.selenium.remote.http.HttpClient;
 import org.openqa.selenium.remote.http.HttpRequest;
 import org.openqa.selenium.remote.http.HttpResponse;
-import org.openqa.selenium.remote.tracing.EventAttributeValue;
+import org.openqa.selenium.remote.tracing.AttributeMap;
 import org.openqa.selenium.remote.tracing.Status;
 import org.openqa.selenium.remote.tracing.Tracer;
 
@@ -44,7 +44,6 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -57,7 +56,6 @@ import static org.openqa.selenium.remote.RemoteTags.CAPABILITIES;
 import static org.openqa.selenium.remote.RemoteTags.SESSION_ID;
 import static org.openqa.selenium.remote.http.HttpMethod.DELETE;
 import static org.openqa.selenium.remote.tracing.AttributeKey.*;
-import static org.openqa.selenium.remote.tracing.EventAttribute.setValue;
 
 @ManagedService(objectName = "org.seleniumhq.grid:type=Node,name=KubernetesNode",
         description = "Node which creates worker pod per session in kubernetes cluster.")
@@ -194,20 +192,19 @@ public class KubernetesNode extends Node {
         try (var span = tracer.getCurrentContext().createSpan("kubernetes_node.new_session")) {
             var desiredCapabilities = sessionRequest.getDesiredCapabilities();
 
-            Map<String, EventAttributeValue> attributeMap = new HashMap<>();
-            attributeMap.put(LOGGER_CLASS.getKey(), setValue(getClass().getName()));
-            attributeMap.put("session.request.capabilities", setValue(desiredCapabilities.toString()));
-            attributeMap.put("session.request.downstreamdialect", setValue(sessionRequest.getDownstreamDialects()
-                    .toString()));
+            AttributeMap attributeMap = tracer.createAttributeMap();
+            attributeMap.put(LOGGER_CLASS.getKey(), getClass().getName());
+            attributeMap.put("session.request.capabilities", desiredCapabilities.toString());
+            attributeMap.put("session.request.downstreamdialect", sessionRequest.getDownstreamDialects().toString());
 
             var currentSessionCount = getCurrentSessionCount();
             span.setAttribute("current.session.count", currentSessionCount);
-            attributeMap.put("current.session.count", setValue(currentSessionCount));
+            attributeMap.put("current.session.count", currentSessionCount);
 
             if (getCurrentSessionCount() >= maxSessionCount) {
                 span.setAttribute("error", true);
                 span.setStatus(Status.RESOURCE_EXHAUSTED);
-                attributeMap.put("max.session.count", setValue(maxSessionCount));
+                attributeMap.put("max.session.count", maxSessionCount);
                 span.addEvent("Max session count reached", attributeMap);
                 return Either.left(new RetrySessionRequestException("Max session count reached."));
             }
