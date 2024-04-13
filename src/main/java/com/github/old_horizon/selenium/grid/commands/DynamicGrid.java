@@ -210,7 +210,7 @@ public class DynamicGrid extends TemplateGridServerCommand {
                     .start();
         }));
 
-        return new Handlers(httpHandler, new ProxyNodeWebsockets(clientFactory, node));
+        return new Handlers(httpHandler, new ProxyNodeWebsockets(clientFactory, node, subPath));
     }
 
     @Override

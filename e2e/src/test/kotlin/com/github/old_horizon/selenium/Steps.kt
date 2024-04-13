@@ -25,7 +25,7 @@ import org.openqa.selenium.remote.http.HttpResponse
 import org.openqa.selenium.remote.http.Route
 import java.net.HttpURLConnection.HTTP_OK
 import java.net.NetworkInterface
-import java.net.URL
+import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -102,7 +102,7 @@ class Steps {
 
     @Step("Recorded video is downloadable from Grid Hub")
     fun isVideoDownloadable() {
-        WebDriverRunner.driver().config().remote()?.let(::URL)?.let {
+        WebDriverRunner.driver().config().remote()?.let(::URI)?.toURL()?.let {
             httpHead {
                 host = it.host
                 port = it.port

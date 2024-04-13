@@ -386,6 +386,9 @@ public class KubernetesNode extends Node {
     private URI rewrite(String path) {
         try {
             var scheme = "https".equals(uri.getScheme()) ? "wss" : "ws";
+            if (uri.getPath() != null && !uri.getPath().equals("/")) {
+                path = uri.getPath() + path;
+            }
             return new URI(scheme, uri.getUserInfo(), uri.getHost(), uri.getPort(), path, null, null);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);

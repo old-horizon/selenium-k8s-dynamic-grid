@@ -12,6 +12,7 @@ import org.openqa.selenium.io.Zip
 import org.openqa.selenium.remote.SessionId
 import java.io.File
 import java.io.InputStream
+import java.net.URI
 import java.net.URL
 
 interface DownloadDirectory {
@@ -25,9 +26,9 @@ interface DownloadDirectory {
                 driver.config().remote()
                         ?.let {
                             if (useDeprecatedEndpoints) {
-                                return RemoteDeprecatedDownloadDirectory(URL(it), driver.sessionId)
+                                return RemoteDeprecatedDownloadDirectory(URI(it).toURL(), driver.sessionId)
                             } else {
-                                return RemoteDownloadDirectory(URL(it), driver.sessionId)
+                                return RemoteDownloadDirectory(URI(it).toURL(), driver.sessionId)
                             }
                         }
                         ?: LocalDownloadDirectory((driver.browserDownloadsFolder() as BrowserDownloadsFolder).folder)
@@ -54,7 +55,7 @@ class RemoteDownloadDirectory(private val remoteUrl: URL, private val sessionId:
     override fun listFiles(): List<String> = url().httpGet().toType<FilesJson>()!!.value.names
 
     override fun deleteFiles() {
-        URL(url()).let {
+        URI(url()).toURL().let {
             httpDelete {
                 host = it.host
                 port = it.port
@@ -66,7 +67,7 @@ class RemoteDownloadDirectory(private val remoteUrl: URL, private val sessionId:
     override fun exists(name: String): Boolean = listFiles().contains(name)
 
     override fun inputStream(name: String): InputStream {
-        val contents = URL(url()).let {
+        val contents = URI(url()).toURL().let {
             httpPost {
                 host = it.host
                 port = it.port
@@ -104,7 +105,7 @@ class RemoteDeprecatedDownloadDirectory(
     override fun listFiles(): List<String> = buildUrl("").httpGet().toType<FilesJson>()!!.files.map { it.name }
 
     override fun deleteFiles() {
-        URL(buildUrl("")).let {
+        URI(buildUrl("")).toURL().let {
             httpDelete {
                 host = it.host
                 port = it.port
